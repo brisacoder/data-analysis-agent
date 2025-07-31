@@ -1,0 +1,65 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LLM Python Runner with Pyodide</title>
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; }
+    textarea { width: 100%; font-family: monospace; }
+    pre { background: #eee; padding: 1rem; border-radius: 5px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h2>Run LLM-Generated Python Code in the Browser (via Pyodide)</h2>
+
+  <h3>Option 1: Paste or Edit Python Code</h3>
+  <textarea id="codeInput" rows="10" placeholder="Paste Python code here...">
+import pandas as pd
+df = pd.DataFrame({'x': [1, 2], 'y': [3, 4]})
+print(df.head())
+  </textarea><br>
+  <button onclick="runLLMCode()">Run Code</button>
+
+  <h3>Option 2: Upload a .py File</h3>
+  <input type="file" id="codeFileInput" accept=".py" />
+
+  <h3>Output</h3>
+  <pre id="llmOutput">Waiting for code execution...</pre>
+
+  <script>
+    let pyodide;
+
+    async function main() {
+      pyodide = await loadPyodide();
+      document.getElementById("llmOutput").textContent = "Pyodide ready. Paste or upload code.";
+    }
+
+    function runLLMCode() {
+      const code = document.getElementById("codeInput").value;
+      const output = document.getElementById("llmOutput");
+      try {
+        const result = pyodide.runPython(code);
+        output.textContent = result;
+      } catch (err) {
+        output.textContent = "Error:\n" + err;
+      }
+    }
+
+    document.getElementById("codeFileInput").addEventListener("change", async (event) => {
+      const file = event.target.files[0];
+      const output = document.getElementById("llmOutput");
+      try {
+        const text = await file.text();
+        const result = pyodide.runPython(text);
+        output.textContent = result;
+      } catch (err) {
+        output.textContent = "Error:\n" + err;
+      }
+    });
+
+    main();
+  </script>
+</body>
+</html>
