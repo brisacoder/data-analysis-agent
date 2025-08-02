@@ -7,10 +7,10 @@ from shapely import wkb
 def decode_point_geom(wkb_hex: str):
     """
     Convert WKB hex string to (longitude, latitude) tuple.
-    
+
     WKB stands for Well-Known Binary — a binary encoding for geometries such as POINT, LINESTRING, etc.
     In this dataset, `point_geom` is a WKB-encoded POINT geometry with SRID 4326 (i.e., GPS/WGS84).
-    
+
     The format is as follows:
         - Starts with a header:
             - Byte order: 01 for little-endian
@@ -19,18 +19,18 @@ def decode_point_geom(wkb_hex: str):
         - Then two 64-bit floats (little-endian IEEE-754 format):
             - Longitude (X)
             - Latitude  (Y)
-    
-    Example (in hex): 
+
+    Example (in hex):
         0101000020E610000088B9835CD22E00C0D0B936AFC59C4540
 
         → "88B9835CD22E00C0" → -2.0228622 (longitude)
         → "D0B936AFC59C4540" → 43.22478   (latitude)
-    
+
     This function uses `shapely.wkb.loads()` to decode the binary into a Shapely Point.
-    
+
     Parameters:
         wkb_hex (str): Hex-encoded WKB string (e.g., "0101000020E6100000...")
-    
+
     Returns:
         tuple: (longitude, latitude) as float values
     """
@@ -40,16 +40,17 @@ def decode_point_geom(wkb_hex: str):
     try:
         # Convert hex string to raw binary (bytes)
         wkb_bytes = binascii.unhexlify(wkb_hex)
-        
+
         # Decode using shapely — interprets WKB into a geometry object
         geom = wkb.loads(wkb_bytes)
 
         # Extract X (longitude) and Y (latitude) from the Point object
         return geom.x, geom.y
-    
+
     except Exception as e:
         print(f"Error decoding WKB: {wkb_hex}, Error: {e}")
         return (None, None)
+
 
 def add_lon_lat_columns(df: pd.DataFrame, geom_column: str = "point_geom"):
     """
@@ -73,5 +74,5 @@ def add_lon_lat_columns(df: pd.DataFrame, geom_column: str = "point_geom"):
     # Split tuple into two separate columns
     df["longitude_decoded"] = coords.apply(lambda tup: tup[0])
     df["latitude_decoded"] = coords.apply(lambda tup: tup[1])
-    
+
     return df
