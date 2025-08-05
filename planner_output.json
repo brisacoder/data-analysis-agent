@@ -1,0 +1,46 @@
+{
+  "task_list": [
+    {
+      "task_name": "Load the dataset",
+      "details": "Load the dataset from a CSV file into a Pandas DataFrame.",
+      "dependencies": "None",
+      "output": "A Pandas DataFrame containing the data.",
+      "assumptions": "Assume the data is stored in a file named 'data.csv' in the current working directory."
+    },
+    {
+      "task_name": "Replace missing values in MedInc with the mean",
+      "details": "Identify missing values (e.g., NaN) in the 'MedInc' column and replace them with the mean value of the 'MedInc' column.",
+      "dependencies": "Loaded DataFrame",
+      "output": "DataFrame with missing 'MedInc' values replaced by the mean.",
+      "assumptions": "Assume missing values are represented as NaN. There may be missing values in 'MedInc' only."
+    },
+    {
+      "task_name": "Standardize the AveOccup column using z-scores",
+      "details": "Calculate the mean and standard deviation of the 'AveOccup' column and transform each value by subtracting the mean and dividing by the standard deviation (z-score standardization).",
+      "dependencies": "DataFrame with missing 'MedInc' values handled",
+      "output": "DataFrame with a standardized 'AveOccup' column (replacing the original values with z-scores).",
+      "assumptions": "Assume the 'AveOccup' column has valid numeric values and no missing data."
+    },
+    {
+      "task_name": "Create RoomsPerPerson feature",
+      "details": "Create a new column 'RoomsPerPerson' by dividing the values in the 'AveRooms' column by the values in the 'Population' column for each row.",
+      "dependencies": "DataFrame with standardized 'AveOccup'",
+      "output": "DataFrame with a new column 'RoomsPerPerson'.",
+      "assumptions": "Assume 'Population' does not contain zeros to avoid division by zero errors."
+    },
+    {
+      "task_name": "Calculate Pearson correlation between MedianHouseValue and RoomsPerPerson",
+      "details": "Compute the Pearson correlation coefficient between the 'MedianHouseValue' and 'RoomsPerPerson' columns.",
+      "dependencies": "DataFrame with 'RoomsPerPerson' feature created",
+      "output": "Pearson correlation coefficient value between 'MedianHouseValue' and 'RoomsPerPerson'.",
+      "assumptions": "Assume both columns contain valid numeric values and no missing data."
+    },
+    {
+      "task_name": "Calculate mean and standard deviation of MedianHouseValue",
+      "details": "Calculate and report the mean and standard deviation of the 'MedianHouseValue' column.",
+      "dependencies": "Loaded DataFrame (original, as preprocessing does not affect this column)",
+      "output": "Mean and standard deviation values of the 'MedianHouseValue' column.",
+      "assumptions": "Assume 'MedianHouseValue' contains no missing values."
+    }
+  ]
+}
