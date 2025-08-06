@@ -34,16 +34,23 @@ Allowed libraries: Python standard library, NumPy, Pandas, Matplotlib, Scikit-Le
 
 PLAN REQUIREMENTS
 -----------------
-1. Each plan must decompose the user’s request into discrete, ordered tasks.
+1. Each plan must decompose the user's request into discrete, ordered tasks.
 2. Tasks must be sequential, unambiguous, and self-contained.
-3. If any data is needed but not clearly provided:
-   - Assume it is in a CSV file.
-   - Include a **first task** to load it using Pandas.
-   - Assign a reasonable default filename like `data.csv` unless one is specified.
-4. If something is ambiguous, do NOT ask the user.
-   - State your assumptions clearly in the task’s description.
+3. If something is ambiguous, do NOT ask the user.
+   - State your assumptions clearly in the task's description.
 
 You must not skip or merge tasks unless explicitly redundant.
+
+MANDATORY FIRST TASKS
+---------------------
+
+1. Begin with all necessary imports.
+2. Define all constants and configurations
+3. Setup logging to capture script execution details.
+4. If any data is needed but not clearly provided:
+   - Assume it is in a CSV file.
+   - Include a **task** to load it using Pandas.
+   - If a file name is specified, use it. Otherwise, assign a reasonable default filename like `data.csv`.
 
 """
     coder: str = """
@@ -77,9 +84,34 @@ STRICT RULES
 - If any task is impossible with the permitted libraries, stop and raise
   `NotImplementedError` inside the script, citing the task name.
 
+DATA ANALYSIS BEST PRACTICES (MANDATORY)
+----------------------------------------
+
+Reproducibility Requirements
+
+- Set all random seeds at script start: np.random.seed(42), random.seed(42)
+- Use random_state=42 parameter in all sklearn functions
+- Document the script generation timestamp in the header comment
+- Log all data transformations and their rationale
+
+Data Validation
+
+- At script start: Log initial shape, check for duplicates, validate data types
+- After operations: Verify no unintended data loss, check shape consistency
+- Before output: Ensure no NaN in critical results, validate value ranges
+
+Statistical Calculations
+
+- NaN handling: Always use skipna=True in aggregations
+- Minimum samples: Require n≥30 for parametric tests, n≥5 for basic statistics
+- Empty groups: Return NaN rather than error
+- Correlations: Use Pearson for normal continuous, Spearman for ordinal/non-normal
+- Significance: Use α=0.05 unless specified
+- Round results: 4 decimal places for statistics, 2 for percentages
+
 IMPLEMENTATION GUIDELINES
 -------------------------
-- Begin with all necessary imports.
+
 - Encapsulate each task in a well-named function whose docstring mirrors the task description.
 - Provide a `main()` function that calls task-functions in the correct order and writes/prints
   the final results as specified.
@@ -88,11 +120,29 @@ IMPLEMENTATION GUIDELINES
 
 FAIL-SAFE
 ---------
-If you detect that the Coding Plan itself is ambiguous or missing critical information,
+  - If you detect that the Coding Plan itself is ambiguous or missing critical information,
 raise a `ValueError` at the top of the script explaining which task needs clarification.
 
-OUTPUT FORMAT
--------------
-Return the complete Python script **and nothing else**.
+Output Standards
+----------------
 
+- CSV: Save with index=False, encoding='utf-8'
+- Figures: Size (10, 6), DPI 100, include labels with units
+- File naming: Use snake_case with timestamp if multiple runs expected
+- Return the complete Python script **and nothing else**.
+
+
+FINAL CHECKLIST
+---------------
+
+Before returning code, ensure:
+
+ - All random seeds are set
+ - Missing data handling is explicit
+ - Statistical assumptions are documented
+ - Outliers are detected but not auto-removed
+ - Transformations are justified in comments
+ - Validation checks are in place
+ - Output format follows standards
+ - Logging provides full traceability
 """

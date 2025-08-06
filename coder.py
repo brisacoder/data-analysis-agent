@@ -13,6 +13,7 @@ from prompts import SystemPrompts
 
 load_dotenv(override=True)
 
+
 class CodeResponse(BaseModel):
     code: str = Field(description="The Python code to execute the task.")
     assumptions: List[str] = Field(
@@ -28,7 +29,9 @@ def create_code(plan: str, question: str, df_json: str) -> CodeResponse:
     df_structure = "DataFrame Structure:\n" + df_json
 
     human_message = HumanMessage(
-        content=f"Plan: {plan}\n\n" + f"Human Request:\n{question}\n\n" + df_structure
+        content=f"Human Request:\n{question}\n\n"
+        + f"Plan: {plan}\n\n"
+        + df_structure
     )
 
     messages = [system_message, human_message]

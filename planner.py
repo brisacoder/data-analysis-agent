@@ -53,10 +53,11 @@ class Plan(BaseModel):
             Each task represents a specific action or operation to be performed
             as part of the overall plan execution.
     """
+
     task_list: List[Task]
 
 
-def create_plan(question: str, df_json: str) -> Plan:
+def create_plan(question: str, df_json: str, file_name: str) -> Plan:
     """
     Create an analysis plan based on a user question and DataFrame structure.
     This function uses a language model to generate a structured plan for data analysis
@@ -81,9 +82,13 @@ def create_plan(question: str, df_json: str) -> Plan:
         content=SystemPrompts.planner,
     )
 
-    df_structure = f"DataFrame Structure:\n{df_json}"
+    data = {
+        "question": question,
+        "file_name": file_name,
+        "data_frame_structure": df_json
+    }
 
-    human_message = HumanMessage(content=f"{question}\n\n{df_structure}")
+    human_message = HumanMessage(content=json.dumps(data, indent=2))
 
     messages = [system_message, human_message]
 
