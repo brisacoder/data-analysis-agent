@@ -60,7 +60,7 @@ class Plan(BaseModel):
     task_list: List[Task]
 
 
-def create_plan(question: str, df_json: str, file_name: str) -> Plan:
+def create_plan(question: str, df_json: str, file_name: Path) -> Plan:
     """
     Create an analysis plan based on a user question and DataFrame structure.
     This function uses a language model to generate a structured plan for data analysis
@@ -87,7 +87,7 @@ def create_plan(question: str, df_json: str, file_name: str) -> Plan:
 
     data = {
         "question": question,
-        "file_name": file_name,
+        "file_name": file_name.as_posix(),
         "data_frame_structure": df_json
     }
 
@@ -111,6 +111,6 @@ def create_plan(question: str, df_json: str, file_name: str) -> Plan:
         raise ValueError(f"Error creating directory: {e}") from e
         # Ensure the directory exists before writing the file
 
-    with open(PLAN_DIR / f"{file_name.split('.')[0]}.json", "w", encoding="utf-8") as f:
+    with open(PLAN_DIR / f"{file_name.stem}.json", "w", encoding="utf-8") as f:
         json.dump(resp.model_dump(), f, indent=2)
     return resp
