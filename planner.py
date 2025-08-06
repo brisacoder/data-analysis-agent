@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime, timezone
 from typing import List
 from pathlib import Path
 from dotenv import load_dotenv
@@ -116,6 +117,9 @@ def create_plan(question: str, df_json: str, file_name: Path) -> Plan:
         os.makedirs(PLAN_DIR, exist_ok=True)
     except Exception as e:
         raise ValueError(f"Error managing directory: {e}") from e
+
+    datetime_str = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    file_name = PLAN_DIR / f"{file_name.stem}_{datetime_str}.py"
 
     with open(PLAN_DIR / f"{file_name.stem}.json", "w", encoding="utf-8") as f:
         json.dump(resp.model_dump(), f, indent=2)

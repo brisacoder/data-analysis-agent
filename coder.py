@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import List
 from dotenv import load_dotenv
@@ -35,7 +36,7 @@ class CodeResponse(BaseModel):
     )
 
 
-def create_code(plan: str, question: str, df_json: str, file_name: str) -> CodeResponse:
+def create_code(plan: str, question: str, df_json: str, file_name: Path) -> CodeResponse:
     """
     Generate Python code based on a data analysis plan and question.
     This function uses a language model to create code that answers a specific question
@@ -90,6 +91,9 @@ def create_code(plan: str, question: str, df_json: str, file_name: str) -> CodeR
         raise ValueError(f"Error creating directory: {e}") from e
         # Ensure the directory exists before writing the file
 
-    with open(CODE_DIR / f"{file_name.split('.')[0]}.py", "w", encoding="utf-8") as f:
+    datetime_str = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    file_name = CODE_DIR / f"{file_name.stem}_{datetime_str}.py"
+
+    with open(file_name, "w", encoding="utf-8") as f:
         f.write(resp.code)
     return resp
