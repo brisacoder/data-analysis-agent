@@ -78,6 +78,13 @@ def create_code(plan: str, question: str, df_json: str, file_name: str) -> CodeR
     # Save the generated code to a file
 
     try:
+
+        # If directory exists, remove all files in it
+        if CODE_DIR.exists():
+            for file in CODE_DIR.iterdir():
+                if file.is_file():
+                    file.unlink()
+
         os.makedirs(CODE_DIR, exist_ok=True)
     except Exception as e:
         raise ValueError(f"Error creating directory: {e}") from e

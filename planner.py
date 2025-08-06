@@ -106,10 +106,16 @@ def create_plan(question: str, df_json: str, file_name: Path) -> Plan:
         raise ValueError(f"Expected Plan, got {type(result)}: {result}")
 
     try:
+        # If directory exists, remove all files in it
+        if PLAN_DIR.exists():
+            for file in PLAN_DIR.iterdir():
+                if file.is_file():
+                    file.unlink()
+        
+        # Ensure the directory exists
         os.makedirs(PLAN_DIR, exist_ok=True)
     except Exception as e:
-        raise ValueError(f"Error creating directory: {e}") from e
-        # Ensure the directory exists before writing the file
+        raise ValueError(f"Error managing directory: {e}") from e
 
     with open(PLAN_DIR / f"{file_name.stem}.json", "w", encoding="utf-8") as f:
         json.dump(resp.model_dump(), f, indent=2)
