@@ -1,6 +1,7 @@
 import json
+import os
 from typing import List
-
+from pathlib import Path
 from dotenv import load_dotenv
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -9,6 +10,8 @@ from pydantic import BaseModel, Field
 from prompts import SystemPrompts
 
 load_dotenv(override=True)
+
+PLAN_DIR = Path("data") / "plan"
 
 
 class Task(BaseModel):
@@ -102,6 +105,12 @@ def create_plan(question: str, df_json: str, file_name: str) -> Plan:
     else:
         raise ValueError(f"Expected Plan, got {type(result)}: {result}")
 
-    with open("planner_output.json", "w", encoding="utf-8") as f:
+    try:
+        os.makedirs(PLAN_DIR, exist_ok=True)
+    except Exception as e:
+        raise ValueError(f"Error creating directory: {e}") from e
+        # Ensure the directory exists before writing the file
+
+    with open(PLAN_DIR / f"{file_name.split('.')[0]}.json", "w", encoding="utf-8") as f:
         json.dump(resp.model_dump(), f, indent=2)
     return resp
