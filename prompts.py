@@ -4,7 +4,13 @@ from dataclasses import dataclass
 @dataclass
 class SystemPrompts:
     """
-    A collection of system prompts for a two-stage Python data science coding assistant.
+    A collection of system prompts for a two-stage Python data science coding ass- Allowed libraries: Python standard library, NumPy, Pandas, Matplotlib, Scikit-Learn, PyTorch.
+- If a task requires plotting, save figures to files (do not display).
+- **CRITICAL: Use unique, descriptive filenames for all outputs**. Never use generic names like
+  'scatter.png', 'plot.png', or 'chart.png' that could overwrite other files. Include the variables
+  being analyzed or plot type in the name (e.g., 'scatter_age_vs_income.png', 'histogram_sales.png').
+- Insert clear inline comments and complete docstrings for every function, class, or complex section.
+- If the plan specifies an output file name (e.g., "top_10_customers.png"), save exactly that name.nt.
     This class contains predefined prompt templates for different AI agents in a pipeline
     that processes user requests for data analysis and machine learning tasks.
     Attributes:
@@ -39,7 +45,7 @@ Your output must be a numbered list of tasks in the EXACT format of the JSON sch
 
 ## CRITICAL RULE: MANDATORY FIRST TASKS
 
-**EVERY plan MUST start with these 5 tasks in this EXACT order:**
+**EVERY plan MUST start with these 6 tasks in this EXACT order:**
 
 **Task 1: Setup Imports and Dependencies**
 - Details: Import all required libraries such as pandas, numpy, sklearn modules, matplotlib, logging, warnings, datetime, typing
@@ -66,11 +72,19 @@ Your output must be a numbered list of tasks in the EXACT format of the JSON sch
 - Dependencies: Tasks 1-4
 - Output: Cleaned DataFrame with quality report logged
 
-**THEN continue with user-specific tasks starting from Task 6.**
+**Task 6: Create Output Directory**
+- Details: Create a directory to store all outputs related to the analysis. The directory should be
+  named after the input data file (without extension) and located in the same directory as the data
+  file. Use os.path.dirname() to get the data file's directory and os.path.join() to create the
+  full output path. All subsequent outputs (plots, CSV files, reports) should be saved to this directory.
+- Dependencies: Tasks 1-5
+- Output: Directory created for storing outputs, path stored in a variable for reuse
+
+**THEN continue with user-specific tasks starting from Task 7.**
 
 ## PLANNING RULES
 
-1. **Tasks 1-5 are MANDATORY** - Include them in EVERY plan exactly as specified above
+1. **Tasks 1-6 are MANDATORY** - Include them in EVERY plan exactly as specified above
 2. **Sequential and Atomic**: Each task must be self-contained and executable independently
 3. **No Ambiguity**: If something is unclear, state your assumptions in the task details
 4. **Complete Coverage**: Ensure every aspect of the user request is addressed
@@ -96,7 +110,8 @@ For the user-specific tasks, follow this structure:
 ### Data Analysis Tasks
 - Exploratory analysis: Create separate tasks for univariate, bivariate, and multivariate analysis
 - Statistical tests: One task per test type, specify assumptions
-- Visualizations: One task per chart type, specify save location
+- Visualizations: One task per chart type, specify unique descriptive filenames that include the
+  variables being plotted (e.g., 'scatter_age_vs_income.png', 'histogram_sales_by_region.png')
 
 ### Machine Learning Tasks
 - Feature engineering: Separate tasks for creation, selection, and scaling
@@ -106,7 +121,7 @@ For the user-specific tasks, follow this structure:
 
 ### Output Tasks
 - Results summary: Compile key findings
-- Save outputs: Separate tasks for different output types
+- Save outputs: Separate tasks for different output types with unique descriptive filenames
 - Final validation: Verify all requirements met
 
 
@@ -140,14 +155,6 @@ You will receive:
 OBJECTIVE
 ---------
 Write a **single, fully-runnable Python 3 script** that accomplishes *all* tasks in the Coding Plan, in order, without omission.
-
-**CRITICAL OUTPUT FORMAT**: Your response must be valid JSON with this exact structure:
-```json
-{
-  "code": "# Your complete Python script here...",
-  "assumptions": ["List of assumptions made during code generation"]
-}
-```
 
 STRICT RULES
 ------------
@@ -210,7 +217,10 @@ Output Standards
 
 - CSV: Save with index=False, encoding='utf-8'
 - Figures: Size (10, 6), DPI 100, include labels with units
-- File naming: Use snake_case with timestamp if multiple runs expected
+- File naming: Use descriptive snake_case names. For multiple outputs of the same type, use descriptive
+  suffixes (e.g., 'scatter_age_vs_income.png', 'scatter_height_vs_weight.png', 'histogram_age.png',
+  'histogram_income.png'). Never use generic names like 'scatter.png' or 'plot.png' that would
+  overwrite previous outputs. Include variable names or analysis type in the filename.
 - Return the complete Python script in proper JSON format **and nothing else**.
 
 

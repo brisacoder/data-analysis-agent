@@ -73,7 +73,7 @@ class PlanGenerator:
     _instance = None
     _initialized = False
     
-    def __new__(cls, plan_dir: Path = PLAN_DIR, clean_on_first_use: bool = True):
+    def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
@@ -116,9 +116,11 @@ class PlanGenerator:
         """
         
         system_message = SystemMessage(content=SystemPrompts.planner)
+        # Use absolute path to make it robust regardless of execution location
+        absolute_data_path = Path.cwd() / data_file_name
         data = {
             "question": question,
-            "file_name": (Path("../../") / data_file_name).as_posix(),
+            "file_name": absolute_data_path.as_posix(),
             "data_frame_structure": df_json
         }
         human_message = HumanMessage(content=json.dumps(data, indent=2))

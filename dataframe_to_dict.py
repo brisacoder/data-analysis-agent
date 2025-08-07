@@ -43,7 +43,8 @@ def parse_dataframe_info(info_output: str) -> str:
             
         # Parse column information using regex
         # Pattern matches: index, column_name, non_null_count, dtype
-        pattern = r'^\s*(\d+)\s+(\S+)\s+(\d+)\s+non-null\s+(\S+)\s*$'
+        # Updated pattern to handle column names with spaces and special characters
+        pattern = r'^\s*(\d+)\s+(.+?)\s+(\d+)\s+non-null\s+(\S+)\s*$'
         match = re.match(pattern, line)
         
         if match:

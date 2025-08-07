@@ -49,7 +49,7 @@ class CodeGenerator:
     _instance = None
     _initialized = False
     
-    def __new__(cls, code_dir: Path = CODE_DIR, clean_on_first_use: bool = True):
+    def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
@@ -108,12 +108,12 @@ class CodeGenerator:
             result = structured_llm.invoke(messages)
             
             # If structured parsing succeeded, use the parsed result
-            if hasattr(result, 'parsed') and isinstance(result.parsed, CodeResponse):
-                resp = result.parsed
+            if 'parsed' in result and result['parsed'] is not None and isinstance(result['parsed'], CodeResponse):
+                resp = result['parsed']
             else:
                 # Fallback: try to parse JSON from the raw response
-                raw_content: str = str(result.raw.content)
-                
+                raw_content: str = str(result['raw'].content)
+
                 # Try to extract JSON from the response
                 json_match = re.search(r'\{.*\}', raw_content, re.DOTALL)
                 if json_match:
