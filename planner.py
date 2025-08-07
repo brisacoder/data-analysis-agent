@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import datetime, timezone
-from typing import List
+from typing import List, Optional
 from pathlib import Path
 from dotenv import load_dotenv
 from langchain.chat_models import init_chat_model
@@ -9,10 +9,9 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from pydantic import BaseModel, Field
 
 from prompts import SystemPrompts
+from paths import paths
 
 load_dotenv(override=True)
-
-PLAN_DIR = Path("data") / "plan"
 
 
 class Task(BaseModel):
@@ -78,10 +77,10 @@ class PlanGenerator:
             cls._instance = super().__new__(cls)
         return cls._instance
     
-    def __init__(self, plan_dir: Path = PLAN_DIR, clean_on_first_use: bool = True):
+    def __init__(self, plan_dir: Optional[Path] = None, clean_on_first_use: bool = True):
         # Only initialize once
         if not hasattr(self, 'plan_dir'):
-            self.plan_dir = plan_dir
+            self.plan_dir = plan_dir if plan_dir is not None else paths.plan_dir
             self.clean_on_first_use = clean_on_first_use
     
     def _ensure_directory_ready(self):
@@ -116,11 +115,10 @@ class PlanGenerator:
         """
         
         system_message = SystemMessage(content=SystemPrompts.planner)
-        # Use absolute path to make it robust regardless of execution location
-        absolute_data_path = Path.cwd() / data_file_name
+        # data_file_name is already an absolute path from main.py
         data = {
             "question": question,
-            "file_name": absolute_data_path.as_posix(),
+            "file_name": data_file_name.as_posix(),
             "data_frame_structure": df_json
         }
         human_message = HumanMessage(content=json.dumps(data, indent=2))

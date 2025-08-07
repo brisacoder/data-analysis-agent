@@ -3,7 +3,7 @@ import os
 import re
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
@@ -14,10 +14,9 @@ from langchain_core.messages import (
 )
 
 from prompts import SystemPrompts
+from paths import paths
 
 load_dotenv(override=True)
-
-CODE_DIR = Path("data") / "code"
 
 
 class CodeResponse(BaseModel):
@@ -54,19 +53,19 @@ class CodeGenerator:
             cls._instance = super().__new__(cls)
         return cls._instance
     
-    def __init__(self, code_dir: Path = CODE_DIR, clean_on_first_use: bool = True):
+    def __init__(self, code_dir: Optional[Path] = None, clean_on_first_use: bool = True):
         # Only initialize once
         if not hasattr(self, 'code_dir'):
-            self.code_dir = code_dir
+            self.code_dir = code_dir if code_dir is not None else paths.code_dir
             self.clean_on_first_use = clean_on_first_use
     
     def _ensure_directory_ready(self):
         """Ensure directory exists and clean it only on first use."""
         if not self._initialized:
             if self.clean_on_first_use and self.code_dir.exists():
-                # Clean existing files only on first use
+                # Clean existing files only on first use (skip log files)
                 for file in self.code_dir.iterdir():
-                    if file.is_file():
+                    if file.is_file() and not file.name.endswith('.log'):
                         file.unlink()
             
             os.makedirs(self.code_dir, exist_ok=True)

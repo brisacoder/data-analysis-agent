@@ -2,7 +2,6 @@ import os
 import io
 import sys
 import logging
-import shutil
 import argparse
 from pathlib import Path
 import pandas as pd
@@ -10,13 +9,14 @@ from dotenv import load_dotenv
 from dataframe_to_dict import parse_dataframe_info
 from planner import create_plan
 from coder import create_code
+from paths import paths
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('data_analysis_agent.log'),
+        logging.FileHandler(paths.log_file),
         logging.StreamHandler(sys.stdout)
     ]
 )
@@ -36,7 +36,7 @@ def validate_environment_variables() -> tuple[Path, Path]:
         raise ValueError("ANSWERS_FILE environment variable is not set")
     
     # Get the directory where this script is located
-    script_dir = Path(__file__).parent.absolute()
+    script_dir = paths.project_root
     
     # Convert relative paths to absolute paths relative to script location
     questions_path = Path(questions_file)
@@ -90,91 +90,14 @@ def load_and_merge_data(questions_path: Path, answers_path: Path) -> pd.DataFram
         raise
 
 
-def cleanup_output_directories(script_dir: Path) -> None:
+def cleanup_output_directories() -> None:
     """Clean up old plan and code files before starting new processing."""
     try:
-        # The planner and coder modules use relative paths, so we need to clean both:
-        # 1. Paths relative to script directory (what we want)
-        # 2. Paths relative to current working directory (what might be created)
-        
-        current_dir = Path.cwd()
-        
-        # Define possible directories to clean
-        possible_dirs = [
-            # Relative to script directory (intended)
-            script_dir / "data" / "plan",
-            script_dir / "data" / "code",
-            # Relative to current working directory (actual behavior)
-            current_dir / "data" / "plan",
-            current_dir / "data" / "code",
-            # In case there are nested paths
-            current_dir / "data" / "code" / "data" / "plan",
-            script_dir / "data" / "code" / "data" / "plan",
-        ]
-        
-        # Define old output files to clean
-        old_csv_files = [
-            script_dir / "data" / "merged_with_plans.csv",
-            script_dir / "data" / "merged_with_code.csv",
-            current_dir / "data" / "merged_with_plans.csv",
-            current_dir / "data" / "merged_with_code.csv",
-        ]
-        
-        directories_cleaned = 0
-        files_removed = 0
-        
-        logger.info(f"Script directory: {script_dir}")
-        logger.info(f"Current working directory: {current_dir}")
-        
-        # Clean directories
-        for directory in possible_dirs:
-            if directory.exists():
-                logger.info(f"Cleaning directory: {directory}")
-                
-                # Remove all files in the directory
-                for file_path in directory.iterdir():
-                    if file_path.is_file():
-                        try:
-                            file_path.unlink()
-                            files_removed += 1
-                            logger.debug(f"Removed file: {file_path}")
-                        except Exception as e:
-                            logger.warning(f"Could not remove file {file_path}: {e}")
-                    elif file_path.is_dir():
-                        try:
-                            shutil.rmtree(file_path)
-                            files_removed += 1
-                            logger.debug(f"Removed directory: {file_path}")
-                        except Exception as e:
-                            logger.warning(f"Could not remove directory {file_path}: {e}")
-                
-                # Remove the directory itself if it's empty
-                try:
-                    if not any(directory.iterdir()):
-                        directory.rmdir()
-                        logger.debug(f"Removed empty directory: {directory}")
-                except Exception as e:
-                    logger.debug(f"Could not remove directory {directory}: {e}")
-                
-                directories_cleaned += 1
-            else:
-                logger.debug(f"Directory does not exist: {directory}")
-        
-        # Clean old CSV files
-        for csv_file in old_csv_files:
-            if csv_file.exists():
-                try:
-                    csv_file.unlink()
-                    files_removed += 1
-                    logger.info(f"Removed old output file: {csv_file}")
-                except Exception as e:
-                    logger.warning(f"Could not remove old output file {csv_file}: {e}")
-        
+        files_removed = paths.clean_output_directories(skip_log_files=True)
         if files_removed > 0:
-            logger.info(f"Cleanup completed: {files_removed} files removed, checked {len(possible_dirs)} directories")
+            logger.info(f"Cleanup completed: {files_removed} files removed")
         else:
             logger.info("Cleanup completed: No files to remove")
-            
     except Exception as e:
         logger.error(f"Error during cleanup: {e}")
         # Don't raise the exception, just log it and continue
@@ -192,10 +115,11 @@ def df_info_to_json(df: pd.DataFrame) -> str:
         raise
 
 
-def process_plans(df_merged: pd.DataFrame, path_prefix: Path) -> pd.DataFrame:
+def process_plans(df_merged: pd.DataFrame) -> pd.DataFrame:
     """Process data to create plans with robust error handling."""
     logger.info("Starting plan creation process...")
     
+    path_prefix = paths.tables_dir
     if not path_prefix.exists():
         logger.error(f"Data directory not found: {path_prefix}")
         raise FileNotFoundError(f"Data directory not found: {path_prefix}")
@@ -266,10 +190,11 @@ def process_plans(df_merged: pd.DataFrame, path_prefix: Path) -> pd.DataFrame:
     return df_merged
 
 
-def process_codes(df_merged: pd.DataFrame, path_prefix: Path) -> pd.DataFrame:
+def process_codes(df_merged: pd.DataFrame) -> pd.DataFrame:
     """Process data to create code with robust error handling."""
     logger.info("Starting code creation process...")
     
+    path_prefix = paths.tables_dir
     if not path_prefix.exists():
         logger.error(f"Data directory not found: {path_prefix}")
         raise FileNotFoundError(f"Data directory not found: {path_prefix}")
@@ -335,7 +260,7 @@ def process_codes(df_merged: pd.DataFrame, path_prefix: Path) -> pd.DataFrame:
     return df_merged
 
 
-def save_dataframe(df: pd.DataFrame, output_path: str) -> None:
+def save_dataframe(df: pd.DataFrame, output_path: Path) -> None:
     """Save DataFrame to CSV with error handling."""
     try:
         output_file = Path(output_path)
@@ -370,31 +295,32 @@ def main(skip_cleanup: bool = False):
             return
         
         # Get script directory for relative paths
-        script_dir = Path(__file__).parent.absolute()
+        script_dir = paths.project_root
         
         # Change working directory to script directory to ensure relative paths work correctly
         original_cwd = Path.cwd()
         os.chdir(script_dir)
         logger.info(f"Changed working directory to: {script_dir}")
         
+        # Ensure required directories exist
+        paths.ensure_directories()
+        
         # Clean up old output files before starting (unless skipped)
         if not skip_cleanup:
             logger.info("Cleaning up old output files...")
-            cleanup_output_directories(script_dir)
+            cleanup_output_directories()
         else:
             logger.info("Skipping cleanup of old output files")
         
-        path_prefix = script_dir / "data/InfiAgent-DABench/da-dev-tables/"
-        
         # Process plans
         logger.info("Processing plans...")
-        df_merged = process_plans(df_merged, path_prefix)
-        save_dataframe(df_merged, str(script_dir / "data/merged_with_plans.csv"))
+        df_merged = process_plans(df_merged)
+        save_dataframe(df_merged, paths.merged_plans_file)
         
         # Process codes
         logger.info("Processing codes...")
-        df_merged = process_codes(df_merged, path_prefix)
-        save_dataframe(df_merged, str(script_dir / "data/merged_with_code.csv"))
+        df_merged = process_codes(df_merged)
+        save_dataframe(df_merged, paths.merged_code_file)
         
         logger.info("Data analysis agent completed successfully!")
         

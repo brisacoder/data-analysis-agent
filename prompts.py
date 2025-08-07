@@ -74,11 +74,14 @@ Your output must be a numbered list of tasks in the EXACT format of the JSON sch
 
 **Task 6: Create Output Directory**
 - Details: Create a directory to store all outputs related to the analysis. The directory should be
-  named after the input data file (without extension) and located in the same directory as the data
-  file. Use os.path.dirname() to get the data file's directory and os.path.join() to create the
-  full output path. All subsequent outputs (plots, CSV files, reports) should be saved to this directory.
+  named after the input data file (without extension) plus '_output' suffix, and located in the same
+  directory as the data file. Use os.path.dirname(data_file_path) to get the data file's directory
+  and os.path.join() to create the full output directory path. Example: if data file is
+  '/path/to/data/myfile.csv', create '/path/to/data/myfile_output/'. Store this output directory
+  path in a variable (e.g., OUTPUT_DIR) for reuse in all subsequent tasks. All outputs (plots,
+  CSV files, reports) should be saved to this directory.
 - Dependencies: Tasks 1-5
-- Output: Directory created for storing outputs, path stored in a variable for reuse
+- Output: Directory created for storing outputs, path stored in OUTPUT_DIR variable for reuse
 
 **THEN continue with user-specific tasks starting from Task 7.**
 
@@ -128,8 +131,8 @@ For the user-specific tasks, follow this structure:
 ## FINAL CHECKLIST
 
 Before returning your plan, verify:
-- [ ] Tasks 1-5 are present and in the correct order
-- [ ] All aspects of user request are covered starting from Task 6
+- [ ] Tasks 1-6 are present and in the correct order
+- [ ] All aspects of user request are covered starting from Task 7
 - [ ] Each task has Details, Dependencies, Assumptions and Output sections
 - [ ] Dependencies correctly reference previous task numbers
 - [ ] No code is included, only task descriptions
@@ -147,7 +150,7 @@ INPUT
 ------
 You will receive:
 1. A “Coding Plan” produced by the Planner Agent.
-   • It is an ordered list of numbered tasks.  
+   • It is an ordered list of numbered tasks.
    • Each task contains: Task Name, Details, Dependencies, Output.
 2. The original user request (for reference only).
 3. The structure of the DataFrame to be used in the tasks. This is the output of Pandas' `df.info()` method
