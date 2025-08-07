@@ -141,10 +141,20 @@ OBJECTIVE
 ---------
 Write a **single, fully-runnable Python 3 script** that accomplishes *all* tasks in the Coding Plan, in order, without omission.
 
+**CRITICAL OUTPUT FORMAT**: Your response must be valid JSON with this exact structure:
+```json
+{
+  "code": "# Your complete Python script here...",
+  "assumptions": ["List of assumptions made during code generation"]
+}
+```
+
 STRICT RULES
 ------------
-- **Return only code** – no prose, comments outside the script, or explanations.
-- The script must be PEP 8 compliant, self-contained, and ready to run.
+- **Return only valid JSON** – no prose, comments outside the JSON, or explanations.
+- The "code" field must contain a complete, PEP 8 compliant, self-contained Python script.
+- The "assumptions" field must be an array of strings describing any assumptions made.
+- Ensure all strings in JSON are properly escaped (e.g., use \\n for newlines, \\" for quotes).
 - Allowed libraries: Python standard library, NumPy, Pandas, Matplotlib, Scikit-Learn, PyTorch.
 - If a task requires plotting, save figures to files (do not display).
 - Insert clear inline comments and complete docstrings for every function, class, or complex section.
@@ -201,14 +211,16 @@ Output Standards
 - CSV: Save with index=False, encoding='utf-8'
 - Figures: Size (10, 6), DPI 100, include labels with units
 - File naming: Use snake_case with timestamp if multiple runs expected
-- Return the complete Python script **and nothing else**.
+- Return the complete Python script in proper JSON format **and nothing else**.
 
 
 FINAL CHECKLIST
 ---------------
 
-Before returning code, ensure:
+Before returning your JSON response, ensure:
 
+ - Response is valid JSON with "code" and "assumptions" fields
+ - All strings are properly JSON-escaped
  - All random seeds are set
  - Missing data handling is explicit
  - Statistical assumptions are documented

@@ -61,66 +61,111 @@ class Plan(BaseModel):
     task_list: List[Task]
 
 
-def create_plan(question: str, df_json: str, file_name: Path) -> Plan:
+class PlanGenerator:
+    """
+    A singleton-like class for managing plan generation and file cleanup.
+    
+    This class ensures that the plan directory is cleaned only once per session,
+    preventing the accumulation of hundreds of test files while avoiding
+    repeated cleanup on every plan generation call.
+    """
+    
+    _instance = None
+    _initialized = False
+    
+    def __new__(cls, plan_dir: Path = PLAN_DIR, clean_on_first_use: bool = True):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+    
+    def __init__(self, plan_dir: Path = PLAN_DIR, clean_on_first_use: bool = True):
+        # Only initialize once
+        if not hasattr(self, 'plan_dir'):
+            self.plan_dir = plan_dir
+            self.clean_on_first_use = clean_on_first_use
+    
+    def _ensure_directory_ready(self):
+        """Ensure directory exists and clean it only on first use."""
+        if not self._initialized:
+            if self.clean_on_first_use and self.plan_dir.exists():
+                # Clean existing files only on first use
+                for file in self.plan_dir.iterdir():
+                    if file.is_file():
+                        file.unlink()
+            
+            os.makedirs(self.plan_dir, exist_ok=True)
+            PlanGenerator._initialized = True
+    
+    def create_plan(self, question: str, df_json: str, data_file_name: Path) -> Plan:
+        """
+        Create an analysis plan based on a user question and DataFrame structure.
+        This method uses a language model to generate a structured plan for data analysis
+        by combining a user's question with DataFrame metadata. The plan is generated using
+        OpenAI's GPT-4.1 model and follows a predefined schema.
+        Args:
+            question (str): The user's question or analysis request
+            df_json (str): JSON string containing the DataFrame structure and metadata
+            file_name (Path): Name for the output plan file (without extension)
+        Returns:
+            Plan: A structured plan object containing the analysis steps
+        Raises:
+            ValueError: If the language model doesn't return a Plan object as expected
+        Side Effects:
+            - Creates and cleans the plan directory only on first use
+            - Writes the generated plan to '{data_file_name}_{timestamp}.json' in the plan directory
+        """
+        
+        system_message = SystemMessage(content=SystemPrompts.planner)
+        data = {
+            "question": question,
+            "file_name": (Path("../../") / data_file_name).as_posix(),
+            "data_frame_structure": df_json
+        }
+        human_message = HumanMessage(content=json.dumps(data, indent=2))
+        messages = [system_message, human_message]
+
+        llm = init_chat_model(
+            "openai:gpt-4.1", temperature=0.7, max_retries=3, output_version="responses/v1"
+        )
+        structured_llm = llm.with_structured_output(schema=Plan)
+        result = structured_llm.invoke(messages)
+        
+        if isinstance(result, Plan):
+            resp = result
+        else:
+            raise ValueError(f"Expected Plan, got {type(result)}: {result}")
+
+        # Ensure directory is ready (clean only on first use)
+        try:
+            self._ensure_directory_ready()
+        except Exception as e:
+            raise ValueError(f"Error preparing directory: {e}") from e
+
+        # Generate timestamped filename
+        datetime_str = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        output_file = self.plan_dir / f"{data_file_name.stem}_{datetime_str}.json"
+
+        # Write the generated plan
+        with open(output_file, "w", encoding="utf-8") as f:
+            json.dump(resp.model_dump(), f, indent=2)
+        
+        return resp
+
+
+# Global instance for backward compatibility
+_plan_generator = PlanGenerator()
+
+
+def create_plan(question: str, df_json: str, data_file_name: Path) -> Plan:
     """
     Create an analysis plan based on a user question and DataFrame structure.
-    This function uses a language model to generate a structured plan for data analysis
-    by combining a user's question with DataFrame metadata. The plan is generated using
-    OpenAI's GPT-4.1 model and follows a predefined schema.
+    This function maintains backward compatibility by delegating to the PlanGenerator singleton.
+    
     Args:
         question (str): The user's question or analysis request
         df_json (str): JSON string containing the DataFrame structure and metadata
+        data_file_name (Path): Name for the output plan file (without extension)
     Returns:
         Plan: A structured plan object containing the analysis steps
-    Raises:
-        ValueError: If the language model doesn't return a Plan object as expected
-    Side Effects:
-        - Writes the generated plan to "planner_output.json" file
-        - Makes API calls to OpenAI's language model
-    Example:
-        >>> plan = create_plan("What are the top 5 products by sales?", df_structure_json)
-        >>> print(plan.steps)
     """
-
-    system_message = SystemMessage(
-        content=SystemPrompts.planner,
-    )
-
-    data = {
-        "question": question,
-        "file_name": file_name.as_posix(),
-        "data_frame_structure": df_json
-    }
-
-    human_message = HumanMessage(content=json.dumps(data, indent=2))
-
-    messages = [system_message, human_message]
-
-    llm = init_chat_model(
-        "openai:gpt-4.1", temperature=0.7, max_retries=3, output_version="responses/v1"
-    )
-    structured_llm = llm.with_structured_output(schema=Plan)
-    result = structured_llm.invoke(messages)
-    if isinstance(result, Plan):
-        resp = result
-    else:
-        raise ValueError(f"Expected Plan, got {type(result)}: {result}")
-
-    try:
-        # If directory exists, remove all files in it
-        if PLAN_DIR.exists():
-            for file in PLAN_DIR.iterdir():
-                if file.is_file():
-                    file.unlink()
-        
-        # Ensure the directory exists
-        os.makedirs(PLAN_DIR, exist_ok=True)
-    except Exception as e:
-        raise ValueError(f"Error managing directory: {e}") from e
-
-    datetime_str = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    file_name = PLAN_DIR / f"{file_name.stem}_{datetime_str}.py"
-
-    with open(PLAN_DIR / f"{file_name.stem}.json", "w", encoding="utf-8") as f:
-        json.dump(resp.model_dump(), f, indent=2)
-    return resp
+    return _plan_generator.create_plan(question, df_json, data_file_name)
