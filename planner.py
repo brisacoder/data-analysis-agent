@@ -9,7 +9,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from pydantic import BaseModel, Field
 
 from prompts import SystemPrompts
-from paths import paths
+from paths import get_paths
 
 load_dotenv(override=True)
 
@@ -80,7 +80,7 @@ class PlanGenerator:
     def __init__(self, plan_dir: Optional[Path] = None, clean_on_first_use: bool = True):
         # Only initialize once
         if not hasattr(self, 'plan_dir'):
-            self.plan_dir = plan_dir if plan_dir is not None else paths.plan_dir
+            self.plan_dir = plan_dir if plan_dir is not None else get_paths().plan_dir
             self.clean_on_first_use = clean_on_first_use
     
     def _ensure_directory_ready(self):
