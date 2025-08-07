@@ -62,7 +62,7 @@ class ProjectPaths:
     @property
     def log_file(self) -> Path:
         """Main application log file."""
-        return self._project_root / "data_analysis_agent.log"
+        return self.data_dir / "data_analysis_agent.log"
 
     @property
     def merged_plans_file(self) -> Path:

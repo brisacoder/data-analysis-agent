@@ -6,7 +6,7 @@ import argparse
 from pathlib import Path
 import pandas as pd
 from dotenv import load_dotenv
-from dataframe_to_dict import parse_dataframe_info
+from dataframe_to_dict import parse_dataframe_info_with_columns
 from planner import create_plan
 from coder import create_code
 from paths import get_paths
@@ -112,7 +112,8 @@ def df_info_to_json(df: pd.DataFrame) -> str:
     try:
         buffer = io.StringIO()
         df.info(buf=buffer, show_counts=True)
-        df_json = parse_dataframe_info(buffer.getvalue())
+        # Use the robust function that takes actual column names
+        df_json = parse_dataframe_info_with_columns(buffer.getvalue(), list(df.columns))
         return df_json
     except Exception as e:
         logger.error(f"Error converting DataFrame info to JSON: {e}")
