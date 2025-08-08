@@ -126,8 +126,8 @@ class CodeGenerator:
         messages = [system_message, human_message]
 
         llm = init_chat_model(
-            "openai:gpt-4.1",
-            temperature=0.7,
+            "openai:gpt-5",
+            # temperature=0.7,
             max_retries=3,
             output_version="responses/v1",
         )

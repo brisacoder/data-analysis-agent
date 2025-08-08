@@ -31,6 +31,7 @@ class Task(BaseModel):
     """
 
     task_name: str = Field(description="Short description of the coding task.")
+    task_number: int = Field(description="Task number in the plan, starting from 1.")
     details: str = Field(
         description="Step-by-step description of what must be done, including any transformations or conditions."
     )
@@ -63,26 +64,28 @@ class Plan(BaseModel):
 class PlanGenerator:
     """
     A singleton-like class for managing plan generation and file cleanup.
-    
+
     This class ensures that the plan directory is cleaned only once per session,
     preventing the accumulation of hundreds of test files while avoiding
     repeated cleanup on every plan generation call.
     """
-    
+
     _instance = None
     _initialized = False
-    
+
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
-    
-    def __init__(self, plan_dir: Optional[Path] = None, clean_on_first_use: bool = True):
+
+    def __init__(
+        self, plan_dir: Optional[Path] = None, clean_on_first_use: bool = True
+    ):
         # Only initialize once
-        if not hasattr(self, 'plan_dir'):
+        if not hasattr(self, "plan_dir"):
             self.plan_dir = plan_dir if plan_dir is not None else get_paths().plan_dir
             self.clean_on_first_use = clean_on_first_use
-    
+
     def _ensure_directory_ready(self):
         """Ensure directory exists and clean it only on first use."""
         if not self._initialized:
@@ -91,10 +94,10 @@ class PlanGenerator:
                 for file in self.plan_dir.iterdir():
                     if file.is_file():
                         file.unlink()
-            
+
             os.makedirs(self.plan_dir, exist_ok=True)
             PlanGenerator._initialized = True
-    
+
     def create_plan(self, question: str, df_json: str, data_file_name: Path) -> Plan:
         """
         Create an analysis plan based on a user question and DataFrame structure.
@@ -113,23 +116,26 @@ class PlanGenerator:
             - Creates and cleans the plan directory only on first use
             - Writes the generated plan to '{data_file_name}_{timestamp}.json' in the plan directory
         """
-        
+
         system_message = SystemMessage(content=SystemPrompts.planner)
         # data_file_name is already an absolute path from main.py
         data = {
             "question": question,
             "file_name": data_file_name.as_posix(),
-            "data_frame_structure": df_json
+            "data_frame_structure": df_json,
         }
         human_message = HumanMessage(content=json.dumps(data, indent=2))
         messages = [system_message, human_message]
 
         llm = init_chat_model(
-            "openai:gpt-4.1", temperature=0.7, max_retries=3, output_version="responses/v1"
+            "openai:gpt-5",
+            # temperature=0.7,
+            max_retries=3,
+            output_version="responses/v1",
         )
         structured_llm = llm.with_structured_output(schema=Plan)
         result = structured_llm.invoke(messages)
-        
+
         if isinstance(result, Plan):
             resp = result
         else:
@@ -148,7 +154,7 @@ class PlanGenerator:
         # Write the generated plan
         with open(output_file, "w", encoding="utf-8") as f:
             json.dump(resp.model_dump(), f, indent=2)
-        
+
         return resp
 
 
@@ -160,7 +166,7 @@ def create_plan(question: str, df_json: str, data_file_name: Path) -> Plan:
     """
     Create an analysis plan based on a user question and DataFrame structure.
     This function maintains backward compatibility by delegating to the PlanGenerator singleton.
-    
+
     Args:
         question (str): The user's question or analysis request
         df_json (str): JSON string containing the DataFrame structure and metadata
