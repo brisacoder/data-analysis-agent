@@ -15,6 +15,7 @@ import sys
 import argparse
 import logging
 import asyncio
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -32,13 +33,29 @@ from paths import get_paths
 app_paths = get_paths()
 
 
-# Configure logging (same format/targets as main.py)
+# Configure logging with Unicode support and better formatting
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[logging.FileHandler(app_paths.log_file), logging.StreamHandler(sys.stdout)],
+    handlers=[
+        logging.FileHandler(app_paths.log_file, encoding='utf-8'),
+        logging.StreamHandler(sys.stdout)
+    ],
 )
 logger = logging.getLogger(__name__)
+
+# Configure console handler to use UTF-8 encoding
+for handler in logging.getLogger().handlers:
+    if isinstance(handler, logging.StreamHandler) and handler.stream == sys.stdout:
+        # Force UTF-8 encoding for console output
+        if hasattr(sys.stdout, 'reconfigure'):
+            sys.stdout.reconfigure(encoding='utf-8')
+        break
+
+# Suppress noisy HTTP debug logging from OpenAI and httpcore to avoid Unicode issues
+logging.getLogger("openai").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
 
 
 # ------------------------- Utility and validation ------------------------- #
@@ -176,6 +193,8 @@ async def process_row_pipeline(
     """
     async with semaphore:
         try:
+            logger.info(f"Starting Row {row.index}: Processing '{row.file_name.name}' with question: '{row.question[:100]}{'...' if len(row.question) > 100 else ''}'")
+            
             if not row.file_name.exists():
                 msg = f"File not found: {row.file_name}"
                 logger.warning(f"Row {row.index}: {msg}")
@@ -183,11 +202,13 @@ async def process_row_pipeline(
 
             # Load CSV
             try:
+                logger.debug(f"Row {row.index}: Loading CSV file...")
                 df = await _read_csv(row.file_name)
                 if df.empty:
                     msg = f"Empty CSV file: {row.file_name}"
                     logger.warning(f"Row {row.index}: {msg}")
                     return RowResult(index=row.index, error=msg)
+                logger.debug(f"Row {row.index}: CSV loaded successfully ({df.shape[0]} rows, {df.shape[1]} columns)")
             except Exception as e:
                 msg = f"Error reading CSV {row.file_name}: {e}"
                 logger.error(f"Row {row.index}: {msg}")
@@ -195,7 +216,9 @@ async def process_row_pipeline(
 
             # DataFrame info -> JSON
             try:
+                logger.debug(f"Row {row.index}: Converting DataFrame info to JSON...")
                 df_json = await asyncio.to_thread(df_info_to_json, df)
+                logger.debug(f"Row {row.index}: DataFrame info conversion completed")
             except Exception as e:
                 msg = f"Error converting DataFrame info to JSON: {e}"
                 logger.error(f"Row {row.index}: {msg}")
@@ -203,27 +226,36 @@ async def process_row_pipeline(
 
             # Create plan (potentially network-bound)
             try:
+                start_time = time.time()
+                logger.info(f"Row {row.index}: 📋 PLANNING - Creating analysis plan...")
                 plan = await asyncio.to_thread(create_plan, row.question, df_json, row.file_name)
                 plan_json = plan.model_dump_json()
+                duration = time.time() - start_time
+                logger.info(f"Row {row.index}: ✅ PLANNING COMPLETE - Plan created successfully in {duration:.1f}s")
             except Exception as e:
                 msg = f"Error creating plan: {e}"
-                logger.error(f"Row {row.index}: {msg}")
+                logger.error(f"Row {row.index}: ❌ PLANNING FAILED - {msg}")
                 return RowResult(index=row.index, error=msg)
 
             # Create code (dependent on plan)
             try:
+                start_time = time.time()
+                logger.info(f"Row {row.index}: 💻 CODING - Generating code from plan...")
                 code = await asyncio.to_thread(create_code, plan_json, row.question, df_json, row.file_name)
                 code_json = code.model_dump_json()
+                duration = time.time() - start_time
+                logger.info(f"Row {row.index}: ✅ CODING COMPLETE - Code generated successfully in {duration:.1f}s")
             except Exception as e:
                 msg = f"Error creating code: {e}"
-                logger.error(f"Row {row.index}: {msg}")
+                logger.error(f"Row {row.index}: ❌ CODING FAILED - {msg}")
                 return RowResult(index=row.index, plan_json=plan_json, error=msg)
 
+            logger.info(f"Row {row.index}: 🎉 PIPELINE COMPLETE - Both planning and coding successful for '{row.file_name.name}'")
             return RowResult(index=row.index, plan_json=plan_json, code_json=code_json)
 
         except Exception as e:  # Catch-all to avoid task cancellation
             msg = f"Unexpected error: {e}"
-            logger.error(f"Row {row.index}: {msg}")
+            logger.error(f"Row {row.index}: ❌ PIPELINE FAILED - {msg}")
             return RowResult(index=row.index, error=msg)
 
 
@@ -271,10 +303,13 @@ async def run_pipeline(
     logger.info(f"Starting concurrent processing with concurrency={max_concurrency} for {len(tasks)} rows")
 
     processed, failed = 0, 0
+    total_tasks = len(tasks)
+    
     for coro in asyncio.as_completed(tasks):
         result = await coro
         if result.error:
             failed += 1
+            logger.warning(f"❌ Row {result.index} failed: {result.error}")
         else:
             processed += 1
             if result.plan_json is not None:
@@ -282,10 +317,14 @@ async def run_pipeline(
             if result.code_json is not None:
                 df_merged.at[result.index, "code"] = result.code_json
 
-        if (processed + failed) % 10 == 0:
-            logger.info(f"Progress: {processed} successful, {failed} failed")
+        # Progress reporting with percentage
+        completed = processed + failed
+        percentage = (completed / total_tasks) * 100 if total_tasks > 0 else 0
+        
+        if completed % 5 == 0 or completed == total_tasks:  # Report every 5 completions or at end
+            logger.info(f"📊 Progress: {completed}/{total_tasks} ({percentage:.1f}%) | ✅ {processed} successful, ❌ {failed} failed")
 
-    logger.info(f"Completed concurrent processing: {processed} successful, {failed} failed")
+    logger.info(f"🏁 Concurrent processing completed: {processed} successful, {failed} failed out of {total_tasks} total")
     return df_merged
 
 
@@ -308,35 +347,43 @@ async def _save_outputs(df: pd.DataFrame) -> None:
 
 
 async def async_main(skip_cleanup: bool, max_concurrency: int) -> int:
+    start_time = time.time()
     try:
-        logger.info("Starting async data analysis agent...")
+        logger.info("🚀 Starting async data analysis agent...")
 
         # Validate env and load data
+        logger.info("⚙️  Validating environment variables and loading data...")
         questions_path, answers_path = validate_environment_variables()
         df_merged = load_and_merge_data(questions_path, answers_path)
         if len(df_merged) == 0:
-            logger.error("No data to process after merging")
+            logger.error("❌ No data to process after merging")
             return 2
 
         # Change working directory to project root so relative paths work
         original_cwd = Path.cwd()
         os.chdir(app_paths.project_root)
-        logger.info(f"Changed working directory to: {app_paths.project_root}")
+        logger.info(f"📁 Changed working directory to: {app_paths.project_root}")
 
         try:
             if not skip_cleanup:
-                logger.info("Cleaning up old output files...")
+                logger.info("🧹 Cleaning up old output files...")
                 cleanup_output_directories()
             else:
-                logger.info("Skipping cleanup of old output files")
+                logger.info("⏭️  Skipping cleanup of old output files")
 
             # Run concurrent pipeline
+            pipeline_start = time.time()
+            logger.info(f"🔄 Starting pipeline with {len(df_merged)} rows and max concurrency of {max_concurrency}...")
             df_merged = await run_pipeline(df_merged, max_concurrency=max_concurrency)
+            pipeline_duration = time.time() - pipeline_start
 
             # Save outputs
+            logger.info("💾 Saving outputs...")
             await _save_outputs(df_merged)
 
-            logger.info("Async data analysis agent completed successfully!")
+            total_duration = time.time() - start_time
+            logger.info("🎉 Async data analysis agent completed successfully!")
+            logger.info(f"⏱️  Total execution time: {total_duration:.1f}s (Pipeline: {pipeline_duration:.1f}s)")
             return 0
 
         finally:
@@ -347,10 +394,12 @@ async def async_main(skip_cleanup: bool, max_concurrency: int) -> int:
                 logger.warning(f"Could not restore working directory: {e}")
 
     except KeyboardInterrupt:
-        logger.info("Process interrupted by user")
+        total_duration = time.time() - start_time
+        logger.info(f"⚠️  Process interrupted by user after {total_duration:.1f}s")
         return 1
     except Exception as e:
-        logger.error(f"Fatal error in async main: {e}")
+        total_duration = time.time() - start_time
+        logger.error(f"💥 Fatal error in async main after {total_duration:.1f}s: {e}")
         return 1
 
 
@@ -372,8 +421,8 @@ def main() -> None:
     parser.add_argument(
         "--max-concurrency",
         type=int,
-        default=min(8, (os.cpu_count() or 4) * 2),
-        help="Maximum number of concurrent rows to process",
+        default=32,
+        help="Maximum number of concurrent rows to process (default: 32, optimized for LLM I/O-bound operations)",
     )
     args = parser.parse_args()
 

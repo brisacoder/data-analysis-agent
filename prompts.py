@@ -48,50 +48,55 @@ Your output must be a numbered list of tasks in the EXACT format of the JSON sch
 
 ## CRITICAL RULE: MANDATORY FIRST TASKS
 
-**EVERY plan MUST start with these 6 tasks in this EXACT order:**
+**EVERY plan MUST start with these 7 tasks in this EXACT order:**
 
-**Task 1: Setup Imports and Dependencies**
-- Details: Import all required libraries such as pandas, numpy, sklearn modules, matplotlib, logging, warnings, datetime, typing
+**Task 1: Setup Top-of-File Structure**
+- Details: Define the top-of-file layout to prevent syntax issues: optional shebang/encoding, optional module docstring, then any `from __future__ import ...` statements, followed by all other imports. The Coding Agent must follow this order exactly.
 - Dependencies: None
+- Output: Top-of-file structure specified
+
+**Task 2: Setup Imports and Dependencies**
+- Details: Import all required libraries such as pandas, numpy, sklearn modules, matplotlib, logging, warnings, datetime, typing
+- Dependencies: Task 1
 - Output: All necessary imports ready
 
-**Task 2: Define Configuration Constants**
+**Task 3: Define Configuration Constants**
 - Details: Define all constants including RANDOM_SEED=42, file paths, and any analysis-specific parameters
-- Dependencies: Task 1
+- Dependencies: Tasks 1-2
 - Output: Configuration constants defined
 
-**Task 3: Setup Logging and Reproducibility**
+**Task 4: Setup Logging and Reproducibility**
 - Details: Configure logging with timestamp format, set random seeds (np.random.seed(42)), suppress warnings if needed
-- Dependencies: Tasks 1-2
+- Dependencies: Tasks 1-3
 - Output: Logging configured, reproducibility ensured
 
-**Task 4: Load and Validate Input Data**
+**Task 5: Load and Validate Input Data**
 - Details: Load data from [specify source - use 'data.csv' if not specified], log initial shape, check for basic validity
-- Dependencies: Tasks 1-3
+- Dependencies: Tasks 1-4
 - Output: Raw DataFrame loaded and initially validated
 
-**Task 5: Data Quality Assessment and Cleaning**
+**Task 6: Data Quality Assessment and Cleaning**
 - Details: Check missing values, duplicates, data types, log data quality metrics, handle missing data per thresholds
-- Dependencies: Tasks 1-4
+- Dependencies: Tasks 1-5
 - Output: Cleaned DataFrame with quality report logged
 
-**Task 6: Create Output Directory**
+**Task 7: Create Output Directory**
 - Details: Define a single output folder for all artifacts.
   - OUTPUT_DIR rule (pathlib):
     1) If an ancestor of data_file_path is named 'data', set OUTPUT_DIR = <data_root>/evals/<data_file_stem>_output
     2) Otherwise set OUTPUT_DIR = <csv_dir>/evals/<data_file_stem>_output
   - Create OUTPUT_DIR with mkdir(parents=True, exist_ok=True)
   - Save all artifacts (plots, CSVs, reports) to OUTPUT_DIR only
-- Dependencies: Tasks 1-5
+- Dependencies: Tasks 1-6
 - Output: Directory created for storing outputs, path stored in OUTPUT_DIR variable for reuse
 
-**THEN continue with user-specific tasks starting from Task 7.**
+**THEN continue with user-specific tasks starting from Task 8.**
 
 **IMPORTANT: Always include a final task to print/display key results to console for immediate user visibility.**
 
 ## PLANNING RULES
 
-1. **Tasks 1-6 are MANDATORY** - Include them in EVERY plan exactly as specified above
+1. **Tasks 1-7 are MANDATORY** - Include them in EVERY plan exactly as specified above
 2. **Sequential and Atomic**: Each task must be self-contained and executable independently
 3. **No Ambiguity**: If something is unclear, state your assumptions in the task details
 4. **Complete Coverage**: Ensure every aspect of the user request is addressed
@@ -110,7 +115,7 @@ When the user request is ambiguous:
   - Train/test split: 70/15/15
   - Missing data: Use thresholds defined in Task 2
 
-## USER-SPECIFIC TASK GUIDELINES (Starting from Task 7)
+## USER-SPECIFIC TASK GUIDELINES (Starting from Task 8)
 
 For the user-specific tasks, follow this structure:
 
@@ -136,8 +141,8 @@ For the user-specific tasks, follow this structure:
 ## FINAL CHECKLIST
 
 Before returning your plan, verify:
-- [ ] Tasks 1-6 are present and in the correct order
-- [ ] All aspects of user request are covered starting from Task 7
+- [ ] Tasks 1-7 are present and in the correct order
+- [ ] All aspects of user request are covered starting from Task 8
 - [ ] Each task has Details, Dependencies, Assumptions and Output sections
 - [ ] Dependencies correctly reference previous task numbers
 - [ ] No code is included, only task descriptions
@@ -181,6 +186,12 @@ STRICT RULES
   `ValueError` in the code rather than guessing.
 - If any task is impossible with the permitted libraries, stop and raise
   `NotImplementedError` inside the script, citing the task name.
+ - Top-of-file structure (MANDATORY): optional shebang/encoding comments, optional module docstring,
+   then any `from __future__ import ...` statements, followed by all other imports. Do not place
+   `from __future__` imports anywhere else in the file.
+ - Dataclass constraints: Do not use mutable defaults (list/dict/set). If a dataclass field must be
+   mutable, use `field(default_factory=...)`. Prefer module-level constants for configuration instead
+   of dataclasses; use tuples for immutable sequences.
 
 DATA ANALYSIS BEST PRACTICES (MANDATORY)
 ----------------------------------------
@@ -202,9 +213,9 @@ IMPLEMENTATION GUIDELINES
 -------------------------
 
 - Encapsulate each task in a well-named function whose docstring mirrors the task description.
-- Provide a `main()` function that calls task-functions in the correct order and writes/prints
-  the final results as specified.
-- Output directory location (pathlib):
+ - Provide a `main()` function that calls task-functions in the correct order and writes/prints
+   the final results as specified.
+ - Output directory location (pathlib):
   - Prefer OUTPUT_DIR from Task 6
   - Else: if an ancestor of data_file_path is named 'data', use <data_root>/evals/<data_file_stem>_output; otherwise use <csv_dir>/evals/<data_file_stem>_output
   - Ensure directory exists with mkdir(parents=True, exist_ok=True)
@@ -213,6 +224,9 @@ IMPLEMENTATION GUIDELINES
   print statements that make the results immediately visible to the user.
 - Use type hints where helpful for readability.
 - Place the customary `if __name__ == "__main__": main()` guard at the end.
+ - Configuration: define constants as module-level names (e.g., UPPER_SNAKE_CASE). Avoid storing
+   constants in dataclasses. If using a dataclass for structured settings or results, consider
+   `frozen=True` and use `field(default_factory=...)` for any mutable members.
 
 FAIL-SAFE
 ---------
