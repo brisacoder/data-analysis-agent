@@ -28,15 +28,15 @@ graph TB
     end
     
     subgraph "Agentic Core"
-        M[Main Controller<br/>main.py]
+        M[Main Controller<br/>src/main.py]
         
         subgraph "Planning Stage"
-            PA[Planner Agent<br/>planner.py]
+            PA[Planner Agent<br/>src/planner.py]
             PP[Plan Processor<br/>Task Decomposition]
         end
         
         subgraph "Execution Stage"
-            CA[Coder Agent<br/>coder.py]
+            CA[Coder Agent<br/>src/coder.py]
             CP[Code Processor<br/>Implementation]
         end
     end
@@ -104,7 +104,7 @@ sequenceDiagram
 
 ### Agent Responsibilities
 
-#### 🎯 Planner Agent (`planner.py`)
+#### 🎯 Planner Agent (`src/planner.py`)
 
 - **Role**: Strategic task decomposition and planning
 - **Input**: Natural language questions + DataFrame metadata
@@ -115,7 +115,7 @@ sequenceDiagram
   - Defines task dependencies and outputs
   - Validates plan completeness and feasibility
 
-#### 💻 Coder Agent (`coder.py`)
+#### 💻 Coder Agent (`src/coder.py`)
 
 - **Role**: Code generation and implementation
 - **Input**: Structured plans + requirements
@@ -332,21 +332,27 @@ data_analysis_agent.log
 
 ```text
 data-analysis-agent/
-├── main.py                 # Main controller and orchestration
-├── planner.py             # Planner Agent implementation
-├── coder.py               # Coder Agent implementation
-├── prompts.py             # System prompts for agents
-├── paths.py               # Centralized path management
-├── dataframe_to_dict.py   # Schema generation utilities
-├── pyproject.toml         # Project configuration
-├── data/                  # Data directory
-│   ├── plan/              # Generated analysis plans
-│   ├── code/              # Generated Python scripts
-│   └── InfiAgent-DABench/ # Input datasets
-└── notebooks/             # Development notebooks
-    ├── planner.ipynb      # Planner development
-    ├── coder.ipynb        # Coder development
-    └── full_run.ipynb     # End-to-end testing
+├── main.py                 # Entry point for main controller
+├── async_main.py           # Entry point for async controller
+├── setup_notebook_path.py  # Helper for notebook imports
+├── src/                    # Source code directory
+│   ├── main.py             # Main controller and orchestration
+│   ├── async_main.py       # Async controller implementation
+│   ├── planner.py          # Planner Agent implementation
+│   ├── coder.py            # Coder Agent implementation
+│   ├── prompts.py          # System prompts for agents
+│   ├── paths.py            # Centralized path management
+│   ├── dataframe_to_dict.py # Schema generation utilities
+│   └── __init__.py         # Package initialization
+├── pyproject.toml          # Project configuration
+├── data/                   # Data directory
+│   ├── plan/               # Generated analysis plans
+│   ├── code/               # Generated Python scripts
+│   └── InfiAgent-DABench/  # Input datasets
+└── notebooks/              # Development notebooks
+    ├── planner.ipynb       # Planner development
+    ├── coder.ipynb         # Coder development
+    └── full_run.ipynb      # End-to-end testing
 ```
 
 ### Key Components
@@ -398,7 +404,7 @@ Converts DataFrame metadata to structured JSON for agent consumption
 3. **Add configuration**:
    - Update `paths.py` for new directories
    - Add prompts to `prompts.py`
-   - Update main workflow in `main.py`
+   - Update main workflow in `src/main.py`
 
 ## 📈 Performance & Scaling
 
