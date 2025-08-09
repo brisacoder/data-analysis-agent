@@ -10,12 +10,13 @@ Key Features:
 - Conditional signal analysis (signals only active under certain conditions)
 - Temporal consistency checks for physically impossible changes
 - CAN bus signal quality assessment
+- Signal dictionary integration for enhanced reporting
 - JSON and text output formats
 - Configurable correlation reporting thresholds
 
 Author: GitHub Copilot
 License: MIT
-Version: 1.0.0
+Version: 1.2.0
 """
 
 import json
@@ -25,6 +26,9 @@ from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 import pandas as pd
+
+# Import signal dictionary functions
+from .build_signal_dictionary import build_signal_dictionary, EXACT_MAP, apply_rules, expand_heuristic, classify_domain
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -37,11 +41,22 @@ AUTOMOTIVE_SIGNAL_RANGES = {
     'ENGINE_SPEED': {'min': 0, 'max': 8000, 'unit': 'rpm'},
     'THROTTLE': {'min': 0, 'max': 100, 'unit': '%'},
     'THROTTLE_POSITION': {'min': 0, 'max': 100, 'unit': '%'},
+    'ACCELERATOR_PEDAL': {'min': 0, 'max': 100, 'unit': '%'},
+    'ENGINE_LOAD': {'min': 0, 'max': 100, 'unit': '%'},
+    'MAF': {'min': 0, 'max': 400, 'unit': 'g/s'},
+    'MAP': {'min': 10, 'max': 300, 'unit': 'kPa'},
+    'AFR_LAMBDA': {'min': 0.7, 'max': 1.5, 'unit': 'λ'},
+    'O2_VOLTAGE': {'min': 0.0, 'max': 1.2, 'unit': 'V'},
     
     # Vehicle dynamics
     'SPEED': {'min': 0, 'max': 300, 'unit': 'km/h'},
     'VEHICLE_SPEED': {'min': 0, 'max': 300, 'unit': 'km/h'},
     'ACCELERATION': {'min': -20, 'max': 20, 'unit': 'm/s²'},
+    'WHEEL_SPEED': {'min': 0, 'max': 300, 'unit': 'km/h'},
+    'STEERING_ANGLE': {'min': -900, 'max': 900, 'unit': 'deg'},
+    'STEERING_TORQUE': {'min': -20, 'max': 20, 'unit': 'Nm'},
+    'STEERING_SPEED': {'min': 0, 'max': 1200, 'unit': 'deg/s'},
+    'GEAR': {'min': -1, 'max': 10, 'unit': 'gear'},
     
     # Temperatures (typical automotive ranges)
     'ENGINE_TEMP': {'min': -40, 'max': 150, 'unit': '°C'},
@@ -49,15 +64,20 @@ AUTOMOTIVE_SIGNAL_RANGES = {
     'OIL_TEMP': {'min': -40, 'max': 200, 'unit': '°C'},
     'INTAKE_TEMP': {'min': -40, 'max': 100, 'unit': '°C'},
     'AMBIENT_TEMP': {'min': -50, 'max': 60, 'unit': '°C'},
+    'ATF_TEMP': {'min': -40, 'max': 180, 'unit': '°C'},
+    'CAT_TEMP': {'min': -40, 'max': 1000, 'unit': '°C'},
     
     # Pressures
     'OIL_PRESSURE': {'min': 0, 'max': 10, 'unit': 'bar'},
     'FUEL_PRESSURE': {'min': 0, 'max': 10, 'unit': 'bar'},
+    'FUEL_RAIL_PRESSURE': {'min': 0, 'max': 2500, 'unit': 'kPa'},
     'BOOST_PRESSURE': {'min': -1, 'max': 3, 'unit': 'bar'},
+    'TIRE_PRESSURE_KPA': {'min': 100, 'max': 400, 'unit': 'kPa'},
     
     # Electrical
     'BATTERY_VOLTAGE': {'min': 9, 'max': 16, 'unit': 'V'},
     'ALTERNATOR_VOLTAGE': {'min': 12, 'max': 15, 'unit': 'V'},
+    'HV_BATTERY_VOLTAGE': {'min': 50, 'max': 800, 'unit': 'V'},
     
     # Fuel
     'FUEL_LEVEL': {'min': 0, 'max': 100, 'unit': '%'},
@@ -79,6 +99,7 @@ CONDITIONAL_SIGNALS = {
 }
 
 # Expected high correlations (these are normal in automotive data)
+# Expected correlations based on either substrings or detected types
 EXPECTED_CORRELATIONS = {
     ('RPM', 'ENGINE_SPEED'): 'Same signal, different names',
     ('SPEED', 'VEHICLE_SPEED'): 'Same signal, different names',
@@ -86,6 +107,20 @@ EXPECTED_CORRELATIONS = {
     ('THROTTLE', 'ENGINE_LOAD'): 'Throttle position affects engine load',
     ('FUEL_FLOW', 'ENGINE_LOAD'): 'Higher load requires more fuel',
     ('ENGINE_TEMP', 'COOLANT_TEMP'): 'Engine and coolant temperatures are related',
+    ('WHL_SPD', 'SPEED'): 'Individual wheel speeds correlate with vehicle speed',
+    ('WHL_SPD', 'WHL_SPD'): 'Wheel speeds correlate with each other',
+    ('VEH_SPD', 'WHEEL_SPEED'): 'Wheel speeds correlate with vehicle speed',
+}
+
+# Expected correlations defined at the signal-type level (order-insensitive)
+EXPECTED_CORRELATION_TYPES = {
+    frozenset({'RPM', 'ENGINE_SPEED'}): 'Same signal, different names',
+    frozenset({'SPEED', 'VEHICLE_SPEED'}): 'Same signal, different names',
+    frozenset({'RPM', 'SPEED'}): 'Engine speed typically correlates with vehicle speed',
+    frozenset({'THROTTLE', 'ENGINE_LOAD'}): 'Throttle position affects engine load',
+    frozenset({'FUEL_FLOW', 'ENGINE_LOAD'}): 'Higher load requires more fuel',
+    frozenset({'ENGINE_TEMP', 'COOLANT_TEMP'}): 'Engine and coolant temperatures are related',
+    frozenset({'WHEEL_SPEED', 'SPEED'}): 'Wheel speeds correlate with vehicle speed',
 }
 
 
@@ -96,13 +131,78 @@ class AutomotiveDataQualityResults:
         self.timestamp = datetime.now()
         self.basic_stats = {}
         self.signal_quality = {}
+        self.signal_dictionary = {}  # Add signal dictionary information
         self.range_violations = {}
         self.temporal_consistency = {}
         self.conditional_signals = {}
         self.correlations = {}
+        self.cross_signal = {}
         self.priority_issues = []
         self.recommendations = []
         self.overall_score = 0.0
+
+
+def get_signal_info_from_dictionary(signal_name: str) -> Dict[str, str]:
+    """
+    Get signal information from the signal dictionary.
+    
+    Parameters
+    ----------
+    signal_name : str
+        Name of the signal
+        
+    Returns
+    -------
+    Dict[str, str]
+        Signal information with expanded name, description, units, and domain
+    """
+    # Check exact mappings first
+    if signal_name in EXACT_MAP:
+        return EXACT_MAP[signal_name]
+    
+    # Try pattern-based rules
+    info = apply_rules(signal_name)
+    if info:
+        expanded, description, units, domain = info
+        return {
+            "expanded": expanded,
+            "description": description,
+            "units": units,
+            "domain": domain,
+        }
+    
+    # Fallback to heuristic
+    return {
+        "expanded": expand_heuristic(signal_name),
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": classify_domain(signal_name),
+    }
+
+
+def detect_automotive_signal_type_enhanced(column_name: str, data: pd.Series) -> Tuple[Optional[str], Dict[str, str]]:
+    """
+    Enhanced signal type detection using signal dictionary.
+    
+    Parameters
+    ----------
+    column_name : str
+        Name of the column to analyze
+    data : pd.Series
+        The data series
+        
+    Returns
+    -------
+    Tuple[Optional[str], Dict[str, str]]
+        Detected signal type and signal information from dictionary
+    """
+    # Get signal info from dictionary
+    signal_info = get_signal_info_from_dictionary(column_name)
+    
+    # Use existing detection logic
+    signal_type = detect_automotive_signal_type(column_name, data)
+    
+    return signal_type, signal_info
 
 
 def detect_automotive_signal_type(column_name: str, data: pd.Series) -> Optional[str]:
@@ -129,12 +229,16 @@ def detect_automotive_signal_type(column_name: str, data: pd.Series) -> Optional
             return signal_type
     
     # Check for partial matches and common variations
-    if any(term in column_upper for term in ['RPM', 'ENGINE_SPEED', 'ENG_SPEED']):
+    if any(term in column_upper for term in ['RPM', 'ENGINE_SPEED', 'ENG_SPEED', 'OBD_ENGRPM']):
         return 'RPM'
-    elif any(term in column_upper for term in ['SPEED', 'VELOCITY', 'VEL']):
+    elif any(term in column_upper for term in ['SPEED', 'SPD', 'VELOCITY', 'VEL', 'KPH', 'MPH', 'VEH_SPD']):
         return 'SPEED'
     elif any(term in column_upper for term in ['THROTTLE', 'TPS', 'ACCEL_PEDAL']):
         return 'THROTTLE'
+    elif any(term in column_upper for term in ['ACCELERATOR_PEDAL', 'ACC_PEDAL', 'APP']):
+        return 'ACCELERATOR_PEDAL'
+    elif any(term in column_upper for term in ['ENGINE_LOAD', 'LOAD']):
+        return 'ENGINE_LOAD'
     elif any(term in column_upper for term in ['TEMP', 'TEMPERATURE']):
         if any(term in column_upper for term in ['ENGINE', 'COOLANT', 'WATER']):
             return 'ENGINE_TEMP'
@@ -144,15 +248,25 @@ def detect_automotive_signal_type(column_name: str, data: pd.Series) -> Optional
             return 'INTAKE_TEMP'
         elif any(term in column_upper for term in ['AMBIENT', 'OUTSIDE', 'EXTERNAL']):
             return 'AMBIENT_TEMP'
+        elif any(term in column_upper for term in ['CAT', 'CATALYST']):
+            return 'CAT_TEMP'
+        elif any(term in column_upper for term in ['ATF', 'TRANS', 'GEARBOX']):
+            return 'ATF_TEMP'
     elif any(term in column_upper for term in ['PRESSURE', 'PRESS']):
         if any(term in column_upper for term in ['OIL']):
             return 'OIL_PRESSURE'
         elif any(term in column_upper for term in ['FUEL']):
+            if 'RAIL' in column_upper:
+                return 'FUEL_RAIL_PRESSURE'
             return 'FUEL_PRESSURE'
         elif any(term in column_upper for term in ['BOOST', 'TURBO', 'MANIFOLD']):
             return 'BOOST_PRESSURE'
+        elif any(term in column_upper for term in ['TIRE', 'TPMS']):
+            return 'TIRE_PRESSURE_KPA'
     elif any(term in column_upper for term in ['VOLTAGE', 'VOLT']):
         if any(term in column_upper for term in ['BATTERY', 'BATT']):
+            if any(term in column_upper for term in ['KEYBATT', 'HV', 'PACK']):
+                return 'HV_BATTERY_VOLTAGE'
             return 'BATTERY_VOLTAGE'
         elif any(term in column_upper for term in ['ALTERNATOR', 'ALT']):
             return 'ALTERNATOR_VOLTAGE'
@@ -162,6 +276,22 @@ def detect_automotive_signal_type(column_name: str, data: pd.Series) -> Optional
         return 'LATITUDE'
     elif any(term in column_upper for term in ['LONGITUDE', 'LON', 'LNG']):
         return 'LONGITUDE'
+    elif any(term in column_upper for term in ['WHL_SPD', 'WHEEL_SPEED', 'WHLSPD', 'WHL_SPD']):
+        return 'WHEEL_SPEED'
+    elif any(term in column_upper for term in ['STEERING_ANGLE', 'SAS_ANGL', 'MDPS_ESTSTRANGL', 'STR_ANGLE']):
+        return 'STEERING_ANGLE'
+    elif any(term in column_upper for term in ['SAS_SPD', 'STR_SPD', 'STEERING_SPEED']):
+        return 'STEERING_SPEED'
+    elif any(term in column_upper for term in ['GEAR', 'GEAR_STA', 'CURRGEAR', 'TRGTGEAR']):
+        return 'GEAR'
+    elif any(term in column_upper for term in ['MAF']):
+        return 'MAF'
+    elif any(term in column_upper for term in ['MAP', 'MAN_ABS_PRS', 'MANIFOLD_ABS']):
+        return 'MAP'
+    elif any(term in column_upper for term in ['LAMBDA', 'AFR']):
+        return 'AFR_LAMBDA'
+    elif any(term in column_upper for term in ['O2S', 'O2_SENSOR', 'OXYGEN_SENSOR']):
+        return 'O2_VOLTAGE'
     
     return None
 
@@ -180,20 +310,24 @@ def check_signal_range_violations(column_name: str, data: pd.Series) -> Dict[str
     Returns
     -------
     Dict[str, Any]
-        Range violation analysis results
+        Range violation analysis results with signal dictionary information
     """
-    signal_type = detect_automotive_signal_type(column_name, data)
+    signal_type, signal_info = detect_automotive_signal_type_enhanced(column_name, data)
     
     if signal_type is None or signal_type not in AUTOMOTIVE_SIGNAL_RANGES:
         return {
-            'signal_type': None,
+            'signal_type': signal_type,
+            'signal_info': signal_info,
             'has_violations': False,
             'violation_count': 0,
             'violation_percentage': 0.0,
             'violations': [],
             'expected_range': None,
-            'actual_range': {'min': data.min(), 'max': data.max()},
-            'summary': 'Signal type not recognized or no validation rules available'
+            'actual_range': {'min': float(data.min()), 'max': float(data.max())},
+            'summary': (
+                f"Signal identified as {signal_type or 'unknown'} - no range validation available. "
+                f"Dictionary info: {signal_info.get('expanded', 'N/A')}"
+            )
         }
     
     expected_range = AUTOMOTIVE_SIGNAL_RANGES[signal_type]
@@ -206,17 +340,84 @@ def check_signal_range_violations(column_name: str, data: pd.Series) -> Dict[str
     
     return {
         'signal_type': signal_type,
+        'signal_info': signal_info,
         'has_violations': violation_count > 0,
         'violation_count': violation_count,
         'violation_percentage': round(violation_percentage, 2),
-        'violations': violations.tolist()[:10],  # Limit to first 10 for brevity
+        'violations': violations.tolist()[:10],  # Limit to first 10 violations for output
         'expected_range': expected_range,
         'actual_range': {'min': float(data.min()), 'max': float(data.max())},
         'summary': (
-            f"Signal identified as {signal_type}. {violation_count} values "
-            f"({violation_percentage:.1f}%) outside expected range "
-            f"[{min_val}, {max_val}] {expected_range['unit']}"
+            f"Signal '{signal_info.get('expanded', column_name)}' identified as {signal_type}. "
+            f"{violation_count} values ({violation_percentage:.1f}%) outside expected range "
+            f"[{min_val}, {max_val}] {expected_range['unit']}. "
+            f"Domain: {signal_info.get('domain', 'Unknown')}"
         )
+    }
+
+
+def check_low_variance_and_saturation(data: pd.Series, bins: int = 50) -> Dict[str, Any]:
+    """Detect near-constant sensors and saturation at min/max bounds."""
+    result = {
+        'is_constant': False,
+        'constant_value': None,
+        'unique_ratio': None,
+        'saturation': {
+            'min_hits_pct': 0.0,
+            'max_hits_pct': 0.0,
+            'is_saturated': False,
+        },
+    }
+    non_null = data.dropna()
+    if non_null.empty:
+        return result
+    unique_count = non_null.nunique()
+    result['unique_ratio'] = round(unique_count / len(non_null), 4)
+    if unique_count == 1:
+        result['is_constant'] = True
+        result['constant_value'] = float(non_null.iloc[0])
+        return result
+    # Saturation detection: percentage at min or max values
+    dmin, dmax = float(non_null.min()), float(non_null.max())
+    min_hits = (non_null == dmin).sum()
+    max_hits = (non_null == dmax).sum()
+    min_pct = 100 * min_hits / len(non_null)
+    max_pct = 100 * max_hits / len(non_null)
+    result['saturation'] = {
+        'min_hits_pct': round(min_pct, 2),
+        'max_hits_pct': round(max_pct, 2),
+        'is_saturated': (min_pct > 30.0) or (max_pct > 30.0),
+    }
+    return result
+
+
+def validate_binary_like_signal(column_name: str, data: pd.Series) -> Dict[str, Any]:
+    """Validate status/flag signals expected to be binary or small-enum.
+
+    Heuristic: if the column name contains STA/STATUS/SW/IND/LMP/LAMP or ends with _STA,
+    and unique numeric values <= 5, report the set of observed states.
+    """
+    name = column_name.upper()
+    if not pd.api.types.is_numeric_dtype(data):
+        return {'is_flag_like': False}
+    if not any(key in name for key in ['_STA', 'STATUS', 'SW', 'SWSTA', 'IND', 'LMP', 'LAMP', 'WRNG', 'WARN']):
+        return {'is_flag_like': False}
+    non_null = data.dropna()
+    if non_null.empty:
+        return {'is_flag_like': True, 'states': [], 'analysis': 'All values null'}
+    states = sorted(pd.unique(non_null))
+    is_binary = set(states).issubset({0, 1})
+    small_enum = len(states) <= 5
+    analysis = 'binary' if is_binary else ('small-enum' if small_enum else 'many-states')
+    issues = []
+    if not small_enum:
+        issues.append('Too many distinct states for a status-like signal')
+    return {
+        'is_flag_like': True,
+        'state_count': int(len(states)),
+        'states': [int(s) if isinstance(s, (int, np.integer)) else float(s) for s in states[:10]],
+        'analysis': analysis,
+        'issues': issues,
     }
 
 
@@ -340,9 +541,59 @@ def check_temporal_consistency(
     }
 
 
-def analyze_correlations_automotive(df: pd.DataFrame, threshold: float = 0.95) -> Dict[str, Any]:
+def cross_signal_plausibility_checks(df: pd.DataFrame) -> Dict[str, Any]:
+    """Run simple cross-signal plausibility checks.
+
+    - Wheel speeds vs vehicle speed
+    - Speed > 0 while RPM == 0 (impossible)
     """
-    Analyze correlations with automotive context.
+    results: Dict[str, Any] = {
+        'wheel_vs_vehicle_speed': [],
+        'speed_positive_rpm_zero_count': 0,
+    }
+    # Identify columns
+    cols = list(df.columns)
+    speed_cols = [c for c in cols if detect_automotive_signal_type(c, df[c]) in ('SPEED', 'VEHICLE_SPEED')]
+    rpm_cols = [c for c in cols if detect_automotive_signal_type(c, df[c]) in ('RPM', 'ENGINE_SPEED')]
+    wheel_cols = [c for c in cols if detect_automotive_signal_type(c, df[c]) == 'WHEEL_SPEED']
+
+    # Wheel vs vehicle speed
+    if speed_cols and wheel_cols:
+        vcol = speed_cols[0]
+        v = pd.to_numeric(df[vcol], errors='coerce')
+        for wcol in wheel_cols:
+            w = pd.to_numeric(df[wcol], errors='coerce')
+            both = pd.concat([v, w], axis=1).dropna()
+            if both.empty:
+                continue
+            diff = (both.iloc[:, 0] - both.iloc[:, 1]).abs()
+            tol = 20.0  # km/h absolute tolerance
+            bad = (diff > tol).sum()
+            bad_pct = 100 * bad / len(both)
+            results['wheel_vs_vehicle_speed'].append({
+                'vehicle_speed_col': vcol,
+                'wheel_speed_col': wcol,
+                'mismatch_pct': round(bad_pct, 2),
+                'tolerance_kph': tol,
+            })
+
+    # Speed > 0 with RPM == 0
+    if speed_cols and rpm_cols:
+        s = pd.to_numeric(df[speed_cols[0]], errors='coerce')
+        r = pd.to_numeric(df[rpm_cols[0]], errors='coerce')
+        mask = (s > 1) & (r < 1)
+        results['speed_positive_rpm_zero_count'] = int(mask.sum())
+
+    return results
+
+
+def analyze_correlations_automotive(
+    df: pd.DataFrame,
+    threshold: float = 0.95,
+    signal_dict: Optional[Dict[str, Dict[str, str]]] = None
+) -> Dict[str, Any]:
+    """
+    Analyze correlations with automotive context and signal dictionary.
     
     Parameters
     ----------
@@ -350,11 +601,13 @@ def analyze_correlations_automotive(df: pd.DataFrame, threshold: float = 0.95) -
         The telemetry data
     threshold : float
         Correlation threshold for reporting
+    signal_dict : Optional[Dict[str, Dict[str, str]]]
+        Signal dictionary for enhanced analysis
         
     Returns
     -------
     Dict[str, Any]
-        Correlation analysis results with automotive context
+        Correlation analysis results with automotive context and signal dictionary info
     """
     # Calculate correlations for numeric columns only
     numeric_df = df.select_dtypes(include=[np.number])
@@ -375,10 +628,17 @@ def analyze_correlations_automotive(df: pd.DataFrame, threshold: float = 0.95) -
             corr_val = corr_matrix.iloc[i, j]
             if abs(corr_val) >= threshold:
                 col1, col2 = corr_matrix.columns[i], corr_matrix.columns[j]
+                
+                # Get signal dictionary info if available
+                col1_info = signal_dict.get(col1, {}) if signal_dict else {}
+                col2_info = signal_dict.get(col2, {}) if signal_dict else {}
+                
                 high_corr_pairs.append({
                     'column1': col1,
                     'column2': col2,
-                    'correlation': round(corr_val, 3)
+                    'correlation': round(corr_val, 3),
+                    'column1_info': col1_info,
+                    'column2_info': col2_info
                 })
     
     # Classify correlations as expected or unexpected
@@ -386,19 +646,39 @@ def analyze_correlations_automotive(df: pd.DataFrame, threshold: float = 0.95) -
     unexpected_correlations = []
     
     for pair in high_corr_pairs:
-        col1, col2 = pair['column1'].upper(), pair['column2'].upper()
+        col1_name, col2_name = pair['column1'], pair['column2']
+        col1, col2 = col1_name.upper(), col2_name.upper()
         is_expected = False
         explanation = ""
-        
-        # Check if this is an expected correlation
-        for (exp_col1, exp_col2), exp_explanation in EXPECTED_CORRELATIONS.items():
-            if (exp_col1 in col1 or exp_col1 in col2) and (exp_col2 in col1 or exp_col2 in col2):
+
+        # 1) Check if both signals are from the same domain (likely correlated)
+        if signal_dict:
+            domain1 = pair['column1_info'].get('domain', '')
+            domain2 = pair['column2_info'].get('domain', '')
+            if domain1 and domain2 and domain1 == domain2:
+                if domain1 in ['Driveline/AWD', 'Chassis/Tires', 'Steering']:
+                    is_expected = True
+                    explanation = f"Both signals from {domain1} domain"
+
+        # 2) Prefer detection via signal types
+        type1 = detect_automotive_signal_type(col1_name, df[col1_name])
+        type2 = detect_automotive_signal_type(col2_name, df[col2_name])
+        if type1 and type2 and not is_expected:
+            type_pair = frozenset({type1, type2})
+            if type_pair in EXPECTED_CORRELATION_TYPES:
                 is_expected = True
-                explanation = exp_explanation
-                break
-        
+                explanation = EXPECTED_CORRELATION_TYPES[type_pair]
+
+        # 3) Fallback to substring heuristics
+        if not is_expected:
+            for (exp_col1, exp_col2), exp_explanation in EXPECTED_CORRELATIONS.items():
+                if (exp_col1 in col1 or exp_col1 in col2) and (exp_col2 in col1 or exp_col2 in col2):
+                    is_expected = True
+                    explanation = exp_explanation
+                    break
+
         pair_with_context = {**pair, 'explanation': explanation}
-        
+
         if is_expected:
             expected_correlations.append(pair_with_context)
         else:
@@ -455,6 +735,22 @@ def generate_automotive_quality_report(
         'missing_percentage': round((df.isnull().sum().sum() / (df.shape[0] * df.shape[1])) * 100, 2)
     }
     
+    # Build signal dictionary for all columns
+    column_names = [col for col in df.columns]
+    header_str = ",".join(column_names)
+    signal_dict = build_signal_dictionary(header_str)
+    results.signal_dictionary = signal_dict
+
+    # Optionally set datetime index for temporal checks
+    time_col_candidates = [c for c in df.columns if c.upper() in ['SIGNAL EVENT TIME', 'TIMESTAMP', 'TIME']]
+    dt_index = None
+    if time_col_candidates:
+        try:
+            tcol = time_col_candidates[0]
+            dt_index = pd.to_datetime(df[tcol], errors='coerce')
+        except Exception:
+            dt_index = None
+
     # Analyze each column
     for column in df.columns:
         if column.upper() in ['SIGNAL EVENT TIME', 'TRIP_ID', 'TRIP_COLOR']:
@@ -462,9 +758,13 @@ def generate_automotive_quality_report(
             
         data = df[column]
         
+        # Get signal dictionary information
+        signal_info = signal_dict.get(column, {})
+        
         # Basic column stats
         col_analysis = {
             'data_type': str(data.dtype),
+            'signal_info': signal_info,  # Add signal dictionary info
             'missing_count': int(data.isnull().sum()),
             'missing_percentage': round((data.isnull().sum() / len(data)) * 100, 2),
             'unique_count': int(data.nunique()),
@@ -480,6 +780,14 @@ def generate_automotive_quality_report(
             conditional_analysis = analyze_conditional_signal(column, data)
             col_analysis['conditional_signal'] = conditional_analysis
             
+            # Low variance and saturation
+            col_analysis['stability'] = check_low_variance_and_saturation(data)
+            
+            # Status/flag validation
+            flag_validation = validate_binary_like_signal(column, data)
+            if flag_validation.get('is_flag_like'):
+                col_analysis['flag_validation'] = flag_validation
+            
             # Basic numeric stats
             col_analysis.update({
                 'min': float(data.min()) if not data.empty else None,
@@ -487,12 +795,22 @@ def generate_automotive_quality_report(
                 'mean': float(data.mean()) if not data.empty else None,
                 'std': float(data.std()) if not data.empty else None
             })
+
+            # Temporal consistency for selected signals when time available
+            if dt_index is not None:
+                sig_type = range_analysis.get('signal_type')
+                if sig_type in {'SPEED', 'RPM', 'ENGINE_TEMP', 'BATTERY_VOLTAGE'}:
+                    ts = pd.Series(data.values, index=dt_index)
+                    col_analysis['temporal_consistency'] = check_temporal_consistency(ts, sig_type)
         
         results.signal_quality[column] = col_analysis
     
     # Correlation analysis
-    correlation_analysis = analyze_correlations_automotive(df, correlation_threshold)
+    correlation_analysis = analyze_correlations_automotive(df, correlation_threshold, results.signal_dictionary)
     results.correlations = correlation_analysis
+
+    # Cross-signal plausibility
+    results.cross_signal = cross_signal_plausibility_checks(df)
     
     # Generate priority issues
     priority_issues = []
@@ -509,7 +827,8 @@ def generate_automotive_quality_report(
             )
     
     if len(correlation_analysis.get('unexpected_correlations', [])) > 10:
-        priority_issues.append(f"High number of unexpected correlations: {len(correlation_analysis['unexpected_correlations'])}")
+        unexpected_count = len(correlation_analysis['unexpected_correlations'])
+        priority_issues.append(f"High number of unexpected correlations: {unexpected_count}")
     
     results.priority_issues = priority_issues
     
@@ -520,11 +839,17 @@ def generate_automotive_quality_report(
     
     for column, analysis in results.signal_quality.items():
         conditional = analysis.get('conditional_signal', {})
-        if conditional.get('is_conditional_signal', False) and conditional.get('zero_percentage', 0) < 50:
-            recommendations.append(f"Verify signal '{column}' behavior - lower than expected zero percentage for conditional signal")
+        is_conditional = conditional.get('is_conditional_signal', False)
+        low_zero_pct = conditional.get('zero_percentage', 0) < 50
+        if is_conditional and low_zero_pct:
+            recommendations.append(
+                f"Verify signal '{column}' behavior - lower than expected zero percentage for conditional signal"
+            )
     
     if len(correlation_analysis.get('unexpected_correlations', [])) > 5:
-        recommendations.append("Review unexpected high correlations for potential data quality issues or feature redundancy")
+        recommendations.append(
+            "Review unexpected high correlations for potential data quality issues or feature redundancy"
+        )
     
     results.recommendations = recommendations
     
@@ -551,6 +876,9 @@ def generate_automotive_quality_report(
     results.overall_score = sum(score_factors) + range_violation_score + correlation_score
     
     # Generate text report
+    missing_total = results.basic_stats['total_missing_values']
+    missing_pct = results.basic_stats['missing_percentage']
+    
     report_lines = [
         "=" * 80,
         "AUTOMOTIVE TELEMETRY DATA QUALITY ASSESSMENT REPORT",
@@ -561,7 +889,7 @@ def generate_automotive_quality_report(
         "-" * 40,
         f"Dataset shape: {results.basic_stats['shape'][0]:,} rows × {results.basic_stats['shape'][1]} columns",
         f"Memory usage: {results.basic_stats['memory_usage_mb']} MB",
-        f"Missing values: {results.basic_stats['total_missing_values']:,} ({results.basic_stats['missing_percentage']:.1f}%)",
+        f"Missing values: {missing_total:,} ({missing_pct:.1f}%)",
         f"Overall quality score: {results.overall_score:.2f}/1.0",
         "",
     ]
@@ -596,10 +924,20 @@ def generate_automotive_quality_report(
         if conditional.get('is_conditional_signal', False):
             conditional_signals += 1
     
+    # Include a brief stability and cross-signal summary
+    constant_cols = [c for c, a in results.signal_quality.items() if a.get('stability', {}).get('is_constant')]
+    
+    def is_saturated(analysis):
+        return analysis.get('stability', {}).get('saturation', {}).get('is_saturated')
+    
+    saturated_cols = [c for c, a in results.signal_quality.items() if is_saturated(a)]
+
     report_lines.extend([
         f"Automotive signals identified: {automotive_signals}",
         f"Signals with range violations: {range_violations}",
         f"Conditional signals identified: {conditional_signals}",
+        f"Near-constant sensors: {len(constant_cols)}",
+        f"Saturated sensors (min/max clipping): {len(saturated_cols)}",
         "",
     ])
     
@@ -627,7 +965,7 @@ def generate_automotive_quality_report(
             "CORRELATION ANALYSIS",
             "-" * 40,
             f"Unexpected high correlations: {len(corr_summary.get('unexpected_correlations', []))}",
-            f"(Expected correlations hidden - use include_all_correlations=True to show)",
+            "(Expected correlations hidden - use include_all_correlations=True to show)",
             "",
         ])
     
@@ -640,7 +978,62 @@ def generate_automotive_quality_report(
         for rec in results.recommendations:
             report_lines.append(f"💡 {rec}")
         report_lines.append("")
+
+    # Cross-signal checks in report (compact)
+    if results.cross_signal.get('wheel_vs_vehicle_speed'):
+        report_lines.extend([
+            "PLAUSIBILITY CHECKS",
+            "-" * 40,
+        ])
+        for item in results.cross_signal['wheel_vs_vehicle_speed'][:4]:
+            wheel_col = item['wheel_speed_col']
+            vehicle_col = item['vehicle_speed_col']
+            mismatch_pct = item['mismatch_pct']
+            tolerance = item['tolerance_kph']
+            report_lines.append(
+                f"Wheel vs vehicle speed mismatch: {wheel_col} vs {vehicle_col} -> "
+                f"{mismatch_pct}% (> {tolerance} kph)"
+            )
+        spd_rpm = results.cross_signal.get('speed_positive_rpm_zero_count', 0)
+        if spd_rpm:
+            report_lines.append(f"Speed>0 with RPM≈0 occurrences: {spd_rpm}")
+        report_lines.append("")
     
+    # Add signal dictionary summary to report
+    if results.signal_dictionary:
+        report_lines.extend([
+            "SIGNAL DICTIONARY SUMMARY",
+            "-" * 40,
+        ])
+        
+        domain_counts: Dict[str, int] = {}
+        for signal_info in results.signal_dictionary.values():
+            domain = signal_info.get('domain', 'Unknown')
+            domain_counts[domain] = domain_counts.get(domain, 0) + 1
+        
+        report_lines.append("Signals by domain:")
+        for domain, count in sorted(domain_counts.items()):
+            report_lines.append(f"  {domain}: {count} signals")
+        
+        # Show some example signal mappings
+        report_lines.extend([
+            "",
+            "Example signal mappings:",
+        ])
+        
+        shown_count = 0
+        for signal_name, signal_info in results.signal_dictionary.items():
+            if shown_count >= 5:
+                break
+            if signal_info.get('expanded') != signal_name:  # Only show interesting mappings
+                expanded = signal_info.get('expanded', 'N/A')
+                units = signal_info.get('units', '')
+                unit_str = f" ({units})" if units else ""
+                report_lines.append(f"  {signal_name} -> {expanded}{unit_str}")
+                shown_count += 1
+        
+        report_lines.append("")
+
     report_lines.extend([
         "=" * 80,
         "END OF REPORT",
@@ -653,8 +1046,10 @@ def generate_automotive_quality_report(
     json_data = {
         'timestamp': results.timestamp.isoformat(),
         'basic_stats': results.basic_stats,
+        'signal_dictionary': results.signal_dictionary,  # Add signal dictionary
         'signal_quality': results.signal_quality,
         'correlations': results.correlations,
+        'cross_signal': results.cross_signal,
         'priority_issues': results.priority_issues,
         'recommendations': results.recommendations,
         'overall_score': results.overall_score

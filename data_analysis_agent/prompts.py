@@ -249,15 +249,15 @@ FINAL CHECKLIST
 
 Before returning your JSON response, ensure:
 
- - Response is valid JSON with "code" and "assumptions" fields
- - All strings are properly JSON-escaped
- - All random seeds are set
- - Missing data handling is explicit
- - Statistical assumptions are documented
- - Outliers are detected but not auto-removed
- - Transformations are justified in comments
- - Validation checks are in place
- - Output format follows standards
- - Logging provides full traceability
- - Key results are printed to console for immediate user visibility
+ - [ ] Response is valid JSON with "code" and "assumptions" fields
+ - [ ] All strings are properly JSON-escaped
+ - [ ] All random seeds are set
+ - [ ] Missing data handling is explicit
+ - [ ] Statistical assumptions are documented
+ - [ ] Outliers are detected but not auto-removed
+ - [ ] Transformations are justified in comments
+ - [ ] Validation checks are in place
+ - [ ] Output format follows standards
+ - [ ] Logging provides full traceability
+ - [ ] Key results are printed to console for immediate user visibility
 """
