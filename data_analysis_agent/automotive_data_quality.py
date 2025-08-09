@@ -37,7 +37,7 @@ import numpy as np
 import pandas as pd
 
 # Import signal dictionary functions
-from .build_signal_dictionary import build_signal_dictionary, EXACT_MAP, apply_rules, expand_heuristic, classify_domain
+from data_analysis_agent.build_signal_dictionary import build_signal_dictionary, EXACT_MAP, apply_rules, expand_heuristic, classify_domain
 
 
 def convert_numpy_types(obj):
@@ -799,8 +799,9 @@ def generate_automotive_quality_report(
     output_file: Optional[str] = None,
     json_output_file: Optional[str] = None,
     correlation_threshold: float = 0.95,
-    include_all_correlations: bool = False
-) -> Tuple[str, Dict[str, Any]]:
+    include_all_correlations: bool = False,
+    silent: Optional[bool] = None
+) -> Optional[Tuple[Optional[str], Dict[str, Any]]]:
     """
     Generate a comprehensive automotive telemetry data quality report.
     
@@ -816,13 +817,21 @@ def generate_automotive_quality_report(
         Threshold for reporting correlations
     include_all_correlations : bool, default False
         Whether to include all correlations or just unexpected ones
+    silent : bool, optional
+        If True, suppress console output. If None (default), automatically
+        set to True when output_file or json_output_file is provided, False otherwise.
         
     Returns
     -------
-    Tuple[str, Dict[str, Any]]
-        Text report and JSON data
+    Optional[Tuple[Optional[str], Dict[str, Any]]]
+        Text report (None if silent=True and files written) and JSON data,
+        or None if silent=True and output files specified
     """
     results = AutomotiveDataQualityResults()
+    
+    # Auto-determine silent mode if not explicitly set
+    if silent is None:
+        silent = bool(output_file or json_output_file)
     
     # Basic statistics
     results.basic_stats = {
@@ -1193,7 +1202,14 @@ def generate_automotive_quality_report(
             json.dump(json_serializable_data, f, indent=2, default=str)
         logger.info(f"JSON report saved to {json_output_file}")
     
-    return text_report, convert_numpy_types(json_data)
+    # Return None entirely in silent mode to suppress console output in notebooks
+    # or return the tuple for programmatic access
+    if silent and (output_file or json_output_file):
+        return None
+    elif silent:
+        return None, convert_numpy_types(json_data)
+    else:
+        return text_report, convert_numpy_types(json_data)
 
 
 # CLI interface functions for integration
@@ -1238,14 +1254,15 @@ if __name__ == "__main__":
     
     try:
         df = pd.read_csv(args.input_file)
-        text_report, json_data = generate_automotive_quality_report(
+        result = generate_automotive_quality_report(
             df,
             output_file=args.output,
             json_output_file=args.json_output,
             correlation_threshold=args.correlation_threshold,
             include_all_correlations=args.include_all_correlations
         )
-        print(text_report)
+        if result and result[0]:  # Only print if result exists and text_report is not None
+            print(result[0])
     except Exception as e:
         logger.error(f"Error processing file: {e}")
         raise

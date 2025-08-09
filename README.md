@@ -520,6 +520,46 @@ Carefully crafted system prompts optimized for each agent:
 - **Template-based**: Consistent formatting and clear instructions
 - **Context-aware**: Incorporates data schema and requirements
 
+#### Automotive Data Quality Assessment (`data_analysis_agent/automotive_data_quality.py`)
+
+Specialized framework for automotive telemetry data quality assessment with domain-specific validation:
+
+- **Signal Type Detection**: Automatic identification of automotive signals (RPM, speed, temperature, etc.)
+- **Range Validation**: Soft and hard range checking with powertrain-specific limits
+- **Conditional Signal Analysis**: Detection of signals active only under certain conditions
+- **Temporal Consistency**: Validation of physically possible value changes over time
+- **Cross-Signal Plausibility**: Correlation checks between related signals (wheel vs vehicle speed)
+- **CAN Bus Signal Support**: Specialized handling for automotive communication protocols
+- **Signal Dictionary Integration**: Enhanced reporting with signal metadata and units
+
+**Key Features:**
+
+```python
+from data_analysis_agent.automotive_data_quality import generate_automotive_quality_report
+
+# Generate comprehensive quality report
+text_report, json_data = generate_automotive_quality_report(
+    df,
+    json_output_file='quality_report.json',  # Optional: save JSON output
+    output_file='quality_report.txt',        # Optional: save text output
+    silent=None,                             # Auto-silent when files specified
+    correlation_threshold=0.95,              # Threshold for reporting correlations
+    include_all_correlations=False           # Show only unexpected correlations
+)
+
+# Silent mode for automated workflows (no console output)
+generate_automotive_quality_report(df, json_output_file='report.json')  # Auto-silent
+
+# Force output even when saving to files
+generate_automotive_quality_report(df, json_output_file='report.json', silent=False)
+```
+
+**Output Modes:**
+
+- **Normal**: Returns `(text_report, json_data)` tuple with console output
+- **Silent**: Returns `None` when files are written, suppressing console output
+- **Hybrid**: Returns `(None, json_data)` for programmatic access without console display
+
 #### Schema Generation (`data_analysis_agent/dataframe_to_dict.py`)
 
 Intelligent DataFrame metadata extraction for agent consumption:
@@ -662,6 +702,11 @@ pytest -m "integration"                      # Integration tests only
 # Parallel execution (if pytest-xdist installed)
 pytest -n auto              # Auto-detect CPU cores
 pytest -n 4                 # Use 4 parallel workers
+
+# Automotive quality tests
+pytest tests/test_automotive_quality.py                    # Basic automotive tests
+pytest tests/test_enhanced_automotive_quality.py           # Enhanced automotive tests
+pytest -k "silent"                                         # Silent mode tests only
 ```
 
 #### Test Configuration

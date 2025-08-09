@@ -208,7 +208,8 @@ class TestEnhancedAutomotiveQuality:
         text_report, json_data = generate_automotive_quality_report(
             df,
             output_file=str(output_txt),
-            json_output_file=str(output_json)
+            json_output_file=str(output_json),
+            silent=False  # Force output to test the return values
         )
         
         # Verify enhanced JSON structure

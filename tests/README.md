@@ -5,7 +5,7 @@ This directory contains unit tests for the data-analysis-agent package.
 ## Test Structure
 
 - `test_planner.py` - Tests for the planner module
-- `test_automotive_quality.py` - Tests for basic automotive quality assessment
+- `test_automotive_quality.py` - Tests for automotive quality assessment including silent mode functionality
 - `test_enhanced_automotive_quality.py` - Tests for enhanced automotive quality with signal dictionary
 - `test_cli.py` - Tests for CLI functionality
 - `test_paths.py` - Tests for path utilities
@@ -107,4 +107,26 @@ def test_with_temp_dir(self, tmp_path):
     # tmp_path is a pytest fixture for temporary directories
     test_file = tmp_path / "test.csv"
     # Your test code here
+```
+
+```
+
+### Testing Automotive Quality Silent Mode
+
+```python
+# Test automatic silent mode detection
+def test_silent_mode_auto_detection():
+    result = generate_automotive_quality_report(df, json_output_file='report.json')
+    assert result is None  # Silent mode returns None
+
+# Test explicit silent mode control
+def test_silent_mode_explicit():
+    result = generate_automotive_quality_report(df, silent=True)
+    assert result[0] is None  # Text report is None in silent mode
+    assert isinstance(result[1], dict)  # JSON data still available
+
+# Test silent mode override
+def test_silent_mode_override():
+    result = generate_automotive_quality_report(df, json_output_file='report.json', silent=False)
+    assert isinstance(result[0], str)  # Forces text output even with file
 ```
