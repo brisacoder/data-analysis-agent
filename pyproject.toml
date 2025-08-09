@@ -1,7 +1,7 @@
 [project]
 name = "data-analysis-agent"
 version = "0.1.0"
-description = "Add your description here"
+description = "AI-powered data analysis agent for automated insights and visualizations"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -19,4 +19,37 @@ dependencies = [
     "scikit-learn>=1.7.1",
     "seaborn>=0.13.2",
     "shapely>=2.1.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-mock>=3.12.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["data_analysis_agent"]
+
+[project.scripts]
+data-analysis-agent = "data_analysis_agent.cli:main"
+data-analysis-agent-async = "data_analysis_agent.async_cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
 ]

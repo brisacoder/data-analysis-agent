@@ -1,0 +1,15 @@
+{"id": 8, "common_answers": [["median_fare_class1", "69.30"], ["median_fare_class2", "15.05"], ["std_dev_fare_class1", "80.86"], ["mean_fare_class3", "13.23"], ["std_dev_fare_class2", "13.19"], ["mean_fare_class2", "21.47"], ["std_dev_fare_class3", "10.04"], ["mean_fare_class1", "87.96"]]}
+{"id": 55, "common_answers": [["mean_cases", "2081990"]]}
+{"id": 58, "common_answers": [["percentage_cases_min", "36.45"], ["percentage_deaths_max", "38.79"]]}
+{"id": 75, "common_answers": [["daily_return_std", "0.94"], ["daily_return_mean", "-0.14"]]}
+{"id": 174, "common_answers": [["fare_skewness", "4.79"]]}
+{"id": 297, "common_answers": [["mean_with_tree_notnull", "45.48"], ["mean_with_tree_null", "4.58"]]}
+{"id": 351, "common_answers": [["correlation_coefficient", "0.32"]]}
+{"id": 372, "common_answers": [["mean", "21144.08"]]}
+{"id": 451, "common_answers": [["missing_values_per_column", "{'DATE TIME': 0, 'WINDSPEED': 594, 'DIR': 0, 'GUSTS': 594, 'AT': 590, 'BARO': 594, 'RELHUM': 8736, 'VIS': 8736}"]]}
+{"id": 510, "common_answers": [["brand_with_highest_average_star_rating", "Preferred Hotels & Resorts"]]}
+{"id": 523, "common_answers": [["child_count", "72"], ["senior_count", "22"]]}
+{"id": 543, "common_answers": [["correlation_coefficient", "0.57"], ["relationship_status", "correlate"]]}
+{"id": 657, "common_answers": [["median_close", "3599.77"], ["std_close", "4113.51"], ["mean_close", "4349.27"]]}
+{"id": 662, "common_answers": [["stddev_price_change", "284.61"], ["median_price_change", "1.31"]]}
+{"id": 673, "common_answers": [["pearson_coefficient", "0.0382"], ["mean_value", "2.1226"]]}
