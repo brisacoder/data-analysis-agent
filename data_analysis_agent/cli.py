@@ -291,9 +291,14 @@ def save_dataframe(df: pd.DataFrame, output_path: Path) -> None:
         raise
 
 
-def main(skip_cleanup: bool = False):
-    """Main function with comprehensive error handling."""
+def run_data_analysis(skip_cleanup: bool = False, log_level: str = "INFO"):
+    """Execute the data analysis pipeline with comprehensive error handling."""
     try:
+        # Update logging level if specified
+        if log_level != "INFO":
+            logging.getLogger().setLevel(getattr(logging, log_level))
+            logger.info(f"Logging level set to {log_level}")
+
         logger.info("Starting data analysis agent...")
 
         # Validate environment and load data
@@ -359,7 +364,8 @@ def main(skip_cleanup: bool = False):
             logger.warning(f"Could not restore working directory: {e}")
 
 
-if __name__ == "__main__":
+def parse_arguments():
+    """Parse command line arguments for the data analysis agent."""
     parser = argparse.ArgumentParser(
         description="Data Analysis Agent with robust error handling"
     )
@@ -374,12 +380,9 @@ if __name__ == "__main__":
         default="INFO",
         help="Set logging level",
     )
+    return parser.parse_args()
 
-    args = parser.parse_args()
 
-    # Update logging level if specified
-    if args.log_level != "INFO":
-        logging.getLogger().setLevel(getattr(logging, args.log_level))
-        logger.info(f"Logging level set to {args.log_level}")
-
-    main(skip_cleanup=args.skip_cleanup)
+if __name__ == "__main__":
+    args = parse_arguments()
+    run_data_analysis(skip_cleanup=args.skip_cleanup, log_level=args.log_level)
