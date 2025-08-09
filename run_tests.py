@@ -29,6 +29,7 @@ def main():
         print("  integration - Run integration tests (requires API key)")
         print("  all         - Run all tests")
         print("  planner     - Run planner tests only")
+        print("  automotive  - Run automotive quality tests only")
         print("  -h, --help  - Show this help message")
         return
     
@@ -53,6 +54,10 @@ def main():
     elif test_type == "planner":
         cmd = base_cmd + ["tests/test_planner.py"]
         success = run_command(cmd, "Planner Tests")
+        
+    elif test_type == "automotive":
+        cmd = base_cmd + ["tests/test_automotive_quality.py", "tests/test_enhanced_automotive_quality.py"]
+        success = run_command(cmd, "Automotive Quality Tests")
         
     else:
         print(f"Unknown test type: {test_type}")

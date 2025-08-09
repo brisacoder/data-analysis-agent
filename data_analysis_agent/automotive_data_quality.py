@@ -14,7 +14,7 @@ Key Features:
 - JSON and text output formats
 - Configurable correlation reporting thresholds
 
-Author: GitHub Copilot
+Author: Reinaldo Penno
 License: MIT
 Version: 1.2.0
 """
@@ -29,6 +29,39 @@ import pandas as pd
 
 # Import signal dictionary functions
 from .build_signal_dictionary import build_signal_dictionary, EXACT_MAP, apply_rules, expand_heuristic, classify_domain
+
+
+def convert_numpy_types(obj):
+    """
+    Recursively convert numpy types to native Python types for JSON serialization.
+    
+    Parameters
+    ----------
+    obj : Any
+        Object that may contain numpy types
+        
+    Returns
+    -------
+    Any
+        Object with numpy types converted to Python native types
+    """
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.bool_):
+        return bool(obj)
+    elif isinstance(obj, dict):
+        return {key: convert_numpy_types(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_numpy_types(item) for item in obj]
+    elif isinstance(obj, tuple):
+        return tuple(convert_numpy_types(item) for item in obj)
+    else:
+        return obj
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -229,7 +262,10 @@ def detect_automotive_signal_type(column_name: str, data: pd.Series) -> Optional
             return signal_type
     
     # Check for partial matches and common variations
-    if any(term in column_upper for term in ['RPM', 'ENGINE_SPEED', 'ENG_SPEED', 'OBD_ENGRPM']):
+    # Check wheel speed BEFORE general speed to avoid conflicts
+    if any(term in column_upper for term in ['WHL_SPD', 'WHEEL_SPEED', 'WHLSPD']):
+        return 'WHEEL_SPEED'
+    elif any(term in column_upper for term in ['RPM', 'ENGINE_SPEED', 'ENG_SPEED', 'ENG_ENGSPD', 'OBD_ENGRPM']):
         return 'RPM'
     elif any(term in column_upper for term in ['SPEED', 'SPD', 'VELOCITY', 'VEL', 'KPH', 'MPH', 'VEH_SPD']):
         return 'SPEED'
@@ -276,8 +312,6 @@ def detect_automotive_signal_type(column_name: str, data: pd.Series) -> Optional
         return 'LATITUDE'
     elif any(term in column_upper for term in ['LONGITUDE', 'LON', 'LNG']):
         return 'LONGITUDE'
-    elif any(term in column_upper for term in ['WHL_SPD', 'WHEEL_SPEED', 'WHLSPD', 'WHL_SPD']):
-        return 'WHEEL_SPEED'
     elif any(term in column_upper for term in ['STEERING_ANGLE', 'SAS_ANGL', 'MDPS_ESTSTRANGL', 'STR_ANGLE']):
         return 'STEERING_ANGLE'
     elif any(term in column_upper for term in ['SAS_SPD', 'STR_SPD', 'STEERING_SPEED']):
@@ -1063,10 +1097,12 @@ def generate_automotive_quality_report(
     
     if json_output_file:
         with open(json_output_file, 'w', encoding='utf-8') as f:
-            json.dump(json_data, f, indent=2, default=str)
+            # Convert numpy types before JSON serialization
+            json_serializable_data = convert_numpy_types(json_data)
+            json.dump(json_serializable_data, f, indent=2, default=str)
         logger.info(f"JSON report saved to {json_output_file}")
     
-    return text_report, json_data
+    return text_report, convert_numpy_types(json_data)
 
 
 # CLI interface functions for integration

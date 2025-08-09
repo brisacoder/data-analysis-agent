@@ -5,6 +5,10 @@ This directory contains unit tests for the data-analysis-agent package.
 ## Test Structure
 
 - `test_planner.py` - Tests for the planner module
+- `test_automotive_quality.py` - Tests for basic automotive quality assessment
+- `test_enhanced_automotive_quality.py` - Tests for enhanced automotive quality with signal dictionary
+- `test_cli.py` - Tests for CLI functionality
+- `test_paths.py` - Tests for path utilities
 - `conftest.py` - Shared test configuration and fixtures
 - `assets/` - Test data files (CSV files, JSONL files)
 
@@ -25,10 +29,27 @@ pytest tests/ -k "not real_llm" -v
 pytest tests/ -m "requires_api_key" -v
 ```
 
-### Specific Test Classes
+### Specific Test Suites
 ```bash
 pytest tests/test_planner.py::TestTask -v
 pytest tests/test_planner.py::TestPlanGenerator -v
+pytest tests/test_automotive_quality.py -v
+pytest tests/test_enhanced_automotive_quality.py -v
+```
+
+### Using the Test Runner
+```bash
+# Unit tests only
+python run_tests.py unit
+
+# All automotive quality tests
+python run_tests.py automotive
+
+# Planner tests only
+python run_tests.py planner
+
+# All tests
+python run_tests.py all
 ```
 
 ## Test Data
