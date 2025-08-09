@@ -1,0 +1,75 @@
+================================================================================
+DATA QUALITY ASSESSMENT REPORT
+================================================================================
+Generated: 2025-08-09 13:32:01
+
+EXECUTIVE SUMMARY
+----------------------------------------
+DataFrame Quality Score: 0.88/1.0
+Shape: 6 rows × 5 columns
+Memory Usage: 0.00 MB
+Duplicate Rows: 0
+Priority Issues: 3 columns need attention
+
+COLUMN-BY-COLUMN ANALYSIS
+----------------------------------------
+
+Column: id
+Type: numeric
+Quality: CLEAN
+  Distribution: normal
+  Skewness: 0.000
+
+Column: sales
+Type: numeric
+Quality: ISSUES FOUND
+Issues: Found: 1 NaN values, 1 positive infinite values
+  Distribution: normal
+  Skewness: nan
+Recommendations: Handle missing values (imputation or removal), Replace infinite values with appropriate substitutes
+
+Column: category
+Type: categorical
+Quality: CLEAN
+Issues: Found: 6 non-numeric values, undefined variance
+  Unique Categories: 3
+
+Column: date
+Type: datetime
+Quality: CLEAN
+Issues: Found: 6 non-numeric values, undefined variance
+  Conversion Errors: 1
+Recommendations: Fix datetime parsing errors or standardize date formats
+
+Column: score
+Type: numeric
+Quality: ISSUES FOUND
+Issues: Found: 1 NaN values
+  Distribution: normal
+  Skewness: -0.494
+Recommendations: Handle missing values (imputation or removal)
+
+PRIORITY ISSUES
+----------------------------------------
+
+sales:
+  Issues: Data quality issues detected
+  Actions: Handle missing values (imputation or removal), Replace infinite values with appropriate substitutes
+
+date:
+  Issues: Datetime parsing errors
+  Actions: Fix datetime parsing errors or standardize date formats
+
+score:
+  Issues: Data quality issues detected
+  Actions: Handle missing values (imputation or removal)
+
+RECOMMENDATIONS SUMMARY
+----------------------------------------
+1. Fix datetime parsing errors or standardize date formats
+2. Handle missing values (imputation or removal)
+3. Replace infinite values with appropriate substitutes
+
+================================================================================
+END OF REPORT
+================================================================================

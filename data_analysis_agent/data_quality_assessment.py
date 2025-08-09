@@ -37,19 +37,318 @@ License: MIT
 Version: 2.0.0
 """
 
+import json
 import logging
 import warnings
 from collections import Counter
 from datetime import datetime
-from typing import Any, Dict, List, Optional, TypedDict, Union
+from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union
 
 import numpy as np
 import pandas as pd
 from scipy import stats
 
+
+def convert_numpy_types(obj):
+    """
+    Recursively convert numpy types to native Python types for JSON serialization.
+    
+    Parameters
+    ----------
+    obj : Any
+        Object that may contain numpy types
+        
+    Returns
+    -------
+    Any
+        Object with numpy types converted to Python native types
+    """
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.bool_):
+        return bool(obj)
+    elif isinstance(obj, dict):
+        return {key: convert_numpy_types(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_numpy_types(item) for item in obj]
+    elif isinstance(obj, tuple):
+        return tuple(convert_numpy_types(item) for item in obj)
+    else:
+        return obj
+
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+class QualityAssessmentConfig:
+    """
+    Configuration class for data quality assessment parameters.
+    
+    This class centralizes all configurable thresholds and parameters
+    used throughout the quality assessment process, making the framework
+    more flexible and maintainable.
+    """
+    
+    def __init__(
+        self,
+        # Problematic values detection
+        extreme_threshold: float = 1e10,
+        check_zeros_default: bool = False,
+        check_negatives_default: bool = False,
+        
+        # Missing value thresholds
+        high_missing_threshold: float = 20.0,    # %
+        critical_missing_threshold: float = 50.0,  # %
+        
+        # Outlier detection
+        outlier_method: str = "iqr",
+        outlier_threshold: float = 1.5,
+        high_outlier_threshold: float = 10.0,    # %
+        
+        # Correlation analysis
+        high_correlation_threshold: float = 0.95,
+        
+        # Quality scoring weights
+        missing_weight: float = 0.3,
+        outlier_weight: float = 0.2,
+        quality_issues_weight: float = 0.3,
+        distribution_weight: float = 0.2,
+        
+        # Performance settings
+        chunk_size: Optional[int] = None,  # None = no chunking
+        max_memory_mb: float = 500.0,
+        enable_progress_tracking: bool = False,
+        
+        # Datetime analysis
+        future_date_threshold_years: int = 5,
+        old_date_threshold_year: int = 1900,
+        
+        # Categorical analysis
+        high_cardinality_threshold: float = 0.95,  # uniqueness ratio
+        mixed_case_tolerance: float = 0.1,  # % of mixed case values to tolerate
+    ):
+        """
+        Initialize quality assessment configuration.
+        
+        Parameters
+        ----------
+        extreme_threshold : float, default 1e10
+            Threshold for detecting extremely large values
+        check_zeros_default : bool, default False
+            Whether to flag zeros as problematic by default
+        check_negatives_default : bool, default False
+            Whether to flag negative values as problematic by default
+        high_missing_threshold : float, default 20.0
+            Percentage threshold for flagging high missing values
+        critical_missing_threshold : float, default 50.0
+            Percentage threshold for flagging critical missing values
+        outlier_method : str, default "iqr"
+            Method for outlier detection ("iqr", "zscore", "isolation")
+        outlier_threshold : float, default 1.5
+            Threshold for outlier detection (IQR multiplier or z-score)
+        high_outlier_threshold : float, default 10.0
+            Percentage threshold for flagging high outlier rates
+        high_correlation_threshold : float, default 0.95
+            Correlation threshold for flagging multicollinearity
+        missing_weight : float, default 0.3
+            Weight for missing values in quality score calculation
+        outlier_weight : float, default 0.2
+            Weight for outliers in quality score calculation
+        quality_issues_weight : float, default 0.3
+            Weight for general quality issues in quality score calculation
+        distribution_weight : float, default 0.2
+            Weight for distribution analysis in quality score calculation
+        chunk_size : int, optional
+            Number of rows to process at once for large datasets
+        max_memory_mb : float, default 500.0
+            Maximum memory usage before triggering chunked processing
+        enable_progress_tracking : bool, default False
+            Whether to show progress bars for long operations
+        future_date_threshold_years : int, default 5
+            Years into future to flag as problematic dates
+        old_date_threshold_year : int, default 1900
+            Year threshold for flagging very old dates
+        high_cardinality_threshold : float, default 0.95
+            Uniqueness ratio threshold for flagging high cardinality
+        mixed_case_tolerance : float, default 0.1
+            Tolerance for mixed case values in categorical data
+        """
+        self.extreme_threshold = extreme_threshold
+        self.check_zeros_default = check_zeros_default
+        self.check_negatives_default = check_negatives_default
+        
+        self.high_missing_threshold = high_missing_threshold
+        self.critical_missing_threshold = critical_missing_threshold
+        
+        self.outlier_method = outlier_method
+        self.outlier_threshold = outlier_threshold
+        self.high_outlier_threshold = high_outlier_threshold
+        
+        self.high_correlation_threshold = high_correlation_threshold
+        
+        self.missing_weight = missing_weight
+        self.outlier_weight = outlier_weight
+        self.quality_issues_weight = quality_issues_weight
+        self.distribution_weight = distribution_weight
+        
+        self.chunk_size = chunk_size
+        self.max_memory_mb = max_memory_mb
+        self.enable_progress_tracking = enable_progress_tracking
+        
+        self.future_date_threshold_years = future_date_threshold_years
+        self.old_date_threshold_year = old_date_threshold_year
+        
+        self.high_cardinality_threshold = high_cardinality_threshold
+        self.mixed_case_tolerance = mixed_case_tolerance
+    
+    def should_use_chunking(self, df: pd.DataFrame) -> bool:
+        """
+        Determine if chunked processing should be used based on DataFrame size.
+        
+        Parameters
+        ----------
+        df : pd.DataFrame
+            DataFrame to assess
+            
+        Returns
+        -------
+        bool
+            True if chunking should be used
+        """
+        if self.chunk_size is not None:
+            return len(df) > self.chunk_size
+        
+        # Estimate memory usage
+        memory_mb = df.memory_usage(deep=True).sum() / 1024 / 1024
+        return memory_mb > self.max_memory_mb
+    
+    def get_effective_chunk_size(self, df: pd.DataFrame) -> int:
+        """
+        Calculate effective chunk size based on DataFrame characteristics.
+        
+        Parameters
+        ----------
+        df : pd.DataFrame
+            DataFrame to assess
+            
+        Returns
+        -------
+        int
+            Recommended chunk size
+        """
+        if self.chunk_size is not None:
+            return self.chunk_size
+        
+        # Calculate based on memory constraints
+        row_memory = df.memory_usage(deep=True).sum() / len(df)  # bytes per row
+        target_memory_bytes = self.max_memory_mb * 1024 * 1024
+        estimated_chunk_size = int(target_memory_bytes / row_memory)
+        
+        # Ensure reasonable bounds
+        return max(1000, min(100000, estimated_chunk_size))
+
+
+# Global default configuration instance
+DEFAULT_CONFIG = QualityAssessmentConfig()
+
+
+class ProgressTracker:
+    """
+    Simple progress tracking utility for data quality assessment operations.
+    """
+    
+    def __init__(self, enabled: bool = False, total: Optional[int] = None):
+        """
+        Initialize progress tracker.
+        
+        Parameters
+        ----------
+        enabled : bool, default False
+            Whether progress tracking is enabled
+        total : int, optional
+            Total number of items to process
+        """
+        self.enabled = enabled
+        self.total = total
+        self.current = 0
+        self.last_reported = 0
+    
+    def update(self, increment: int = 1, description: str = "Processing"):
+        """
+        Update progress counter.
+        
+        Parameters
+        ----------
+        increment : int, default 1
+            Number of items processed
+        description : str, default "Processing"
+            Description of current operation
+        """
+        if not self.enabled:
+            return
+            
+        self.current += increment
+        
+        # Report progress every 10% or every 10 items, whichever is larger
+        if self.total:
+            report_interval = max(10, self.total // 10)
+        else:
+            report_interval = 10
+            
+        if self.current - self.last_reported >= report_interval:
+            if self.total:
+                percentage = (self.current / self.total) * 100
+                logger.info(f"{description}: {self.current}/{self.total} ({percentage:.1f}%)")
+            else:
+                logger.info(f"{description}: {self.current} items processed")
+            self.last_reported = self.current
+    
+    def finish(self, description: str = "Processing"):
+        """Mark processing as complete."""
+        if self.enabled:
+            logger.info(f"{description}: Complete ({self.current} items processed)")
+
+
+def estimate_memory_usage(df: pd.DataFrame) -> float:
+    """
+    Estimate memory usage of a DataFrame in MB.
+    
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame to analyze
+        
+    Returns
+    -------
+    float
+        Estimated memory usage in MB
+    """
+    return df.memory_usage(deep=True).sum() / (1024 * 1024)
+
+
+def should_use_chunked_processing(df: pd.DataFrame, config: QualityAssessmentConfig) -> bool:
+    """
+    Determine if chunked processing should be used for the given DataFrame.
+    
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame to assess
+    config : QualityAssessmentConfig
+        Configuration settings
+        
+    Returns
+    -------
+    bool
+        True if chunked processing is recommended
+    """
+    return config.should_use_chunking(df)
 
 
 class DataLeakageResults(TypedDict):
@@ -330,19 +629,29 @@ def _check_special_numeric_values(
     Dict[str, Any]
         Dictionary with counts and indices of special values
     """
-    result = {'zero_count': 0, 'negative_count': 0, 'special_indices': []}
+    result = {
+        'zero_count': 0, 
+        'negative_count': 0, 
+        'special_indices': [],
+        'zero_indices': [],
+        'negative_indices': []
+    }
     
     if check_zeros:
         zero_mask = numeric_series == 0
         result['zero_count'] = zero_mask.sum()
         if result['zero_count'] > 0:
-            result['special_indices'].extend(numeric_series[zero_mask].index.tolist())
+            zero_indices = numeric_series[zero_mask].index.tolist()
+            result['zero_indices'] = zero_indices
+            result['special_indices'].extend(zero_indices)
     
     if check_negatives:
         neg_mask = numeric_series < 0
         result['negative_count'] = neg_mask.sum()
         if result['negative_count'] > 0:
-            result['special_indices'].extend(numeric_series[neg_mask].index.tolist())
+            neg_indices = numeric_series[neg_mask].index.tolist()
+            result['negative_indices'] = neg_indices
+            result['special_indices'].extend(neg_indices)
     
     return result
 
@@ -353,6 +662,7 @@ def check_problematic_values(
     check_negatives: bool = False,
     extreme_threshold: float = 1e10,
     return_details: bool = True,
+    expected_type: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Comprehensive check for problematic values in a pandas Series.
@@ -464,7 +774,8 @@ def check_problematic_values(
         newly_nan = pd.isna(numeric_series) & pd.notna(non_nan_series)
         results["non_numeric_count"] = newly_nan.sum()
 
-        if results["non_numeric_count"] > 0:
+        # Only flag non-numeric values as problematic if we expect numeric data
+        if results["non_numeric_count"] > 0 and expected_type == "numeric":
             results["is_clean"] = False
             if return_details:
                 non_numeric_indices = non_nan_series[newly_nan].index.tolist()
@@ -474,7 +785,7 @@ def check_problematic_values(
         clean_numeric = numeric_series.dropna()
 
         if len(clean_numeric) > 0:
-            # Check for infinite values
+            # Check for infinite values (always problematic for any data type)
             inf_results = _check_infinite_values(clean_numeric)
             results["inf_count"] = inf_results["inf_count"]
             results["ninf_count"] = inf_results["ninf_count"]
@@ -487,7 +798,9 @@ def check_problematic_values(
             # Remove infinite values for remaining analysis
             finite_numeric = clean_numeric[np.isfinite(clean_numeric)]
 
-            if len(finite_numeric) > 0:
+            if len(finite_numeric) > 0 and expected_type == "numeric":
+                # Only do numeric-specific checks if we expect numeric data
+                
                 # Check for special numeric values (zeros, negatives)
                 special_results = _check_special_numeric_values(
                     finite_numeric, check_zeros, check_negatives
@@ -495,10 +808,15 @@ def check_problematic_values(
                 results["zero_count"] = special_results["zero_count"]
                 results["negative_count"] = special_results["negative_count"]
                 
-                if special_results["zero_count"] > 0 or special_results["negative_count"] > 0:
+                if check_zeros and special_results["zero_count"] > 0:
                     results["is_clean"] = False
                     if return_details:
-                        results["problematic_indices"].extend(special_results["special_indices"])
+                        results["problematic_indices"].extend(special_results.get("zero_indices", []))
+                        
+                if check_negatives and special_results["negative_count"] > 0:
+                    results["is_clean"] = False
+                    if return_details:
+                        results["problematic_indices"].extend(special_results.get("negative_indices", []))
 
                 # Check for extreme values
                 extreme_results = _check_extreme_values(finite_numeric, extreme_threshold)
@@ -552,7 +870,7 @@ def check_problematic_values(
         results["problematic_indices"] = list(set(results["problematic_indices"]))
 
     # Generate comprehensive summary
-    results["summary"] = _generate_problematic_values_summary(results, check_zeros, check_negatives)
+    results["summary"] = _generate_problematic_values_summary(results, check_zeros, check_negatives, expected_type)
 
     return results
 
@@ -560,7 +878,8 @@ def check_problematic_values(
 def _generate_problematic_values_summary(
     results: Dict[str, Any], 
     check_zeros: bool, 
-    check_negatives: bool
+    check_negatives: bool,
+    expected_type: Optional[str] = None
 ) -> str:
     """
     Generate a summary of problematic values found.
@@ -573,6 +892,8 @@ def _generate_problematic_values_summary(
         Whether zeros were checked
     check_negatives : bool
         Whether negatives were checked
+    expected_type : str, optional
+        Expected data type (numeric, categorical, datetime)
         
     Returns
     -------
@@ -587,8 +908,11 @@ def _generate_problematic_values_summary(
         issues.append(f"{results['inf_count']} positive infinite values")
     if results["ninf_count"] > 0:
         issues.append(f"{results['ninf_count']} negative infinite values")
-    if results["non_numeric_count"] > 0:
+    
+    # Only include non-numeric as issue if we expect numeric data
+    if results["non_numeric_count"] > 0 and expected_type == "numeric":
         issues.append(f"{results['non_numeric_count']} non-numeric values")
+    
     if check_zeros and results["zero_count"] > 0:
         issues.append(f"{results['zero_count']} zero values")
     if check_negatives and results["negative_count"] > 0:
@@ -601,7 +925,9 @@ def _generate_problematic_values_summary(
         issues.append(f"{results['empty_string_count']} empty/whitespace strings")
     if results["mixed_types"]:
         issues.append("mixed data types")
-    if pd.isna(results["variance"]):
+    
+    # Only include undefined variance as issue if we expect numeric data
+    if pd.isna(results["variance"]) and expected_type == "numeric":
         issues.append("undefined variance")
 
     return f"Found: {', '.join(issues)}" if issues else "No problematic values detected"
@@ -2133,7 +2459,8 @@ def _detect_column_type(series: pd.Series) -> str:
 
 def analyze_column_comprehensive(
     series: pd.Series,
-    column_type: Optional[str] = None,
+    expected_type: Optional[str] = None,
+    config: Optional[QualityAssessmentConfig] = None,
 ) -> Dict[str, Any]:
     """
     Perform comprehensive analysis on a single column.
@@ -2219,37 +2546,127 @@ def analyze_column_comprehensive(
     }
 
     # Detect or use specified column type
-    if column_type is None:
-        column_type = _detect_column_type(series)
+    if expected_type is None:
+        expected_type = _detect_column_type(series)
     
-    results["detected_type"] = column_type
+    results["detected_type"] = expected_type
 
     # Perform basic quality assessment (for all types)
-    results["basic_quality"] = check_problematic_values(series)
+    results["basic_quality"] = check_problematic_values(series, expected_type=expected_type, check_zeros=False)
 
     # Perform pattern analysis (for all types)
     results["patterns"] = analyze_patterns(series)
 
     # Perform type-specific analysis
-    if column_type == "numeric":
+    if expected_type == "numeric":
         results["distribution"] = analyze_distribution(series)
         results["outliers"] = analyze_outliers(series)
         
-    elif column_type == "datetime":
+    elif expected_type == "datetime":
         results["type_specific"] = analyze_temporal_data(series)
+        # Flag datetime columns with conversion errors as problematic
+        if results["type_specific"].get("conversion_errors", 0) > 0:
+            results["basic_quality"]["is_clean"] = False
         
-    elif column_type == "categorical":
+    elif expected_type == "categorical":
         results["type_specific"] = analyze_categorical_data(series)
 
     # Generate recommendations based on findings
-    results["recommendations"] = _generate_column_recommendations(results, column_type)
+    results["recommendations"] = _generate_column_recommendations(results, expected_type, config)
 
     return results
 
 
+def _calculate_column_quality_score(
+    column_analysis: Dict[str, Any],
+    config: QualityAssessmentConfig
+) -> float:
+    """
+    Calculate quality score for a single column based on analysis results.
+    
+    Parameters
+    ----------
+    column_analysis : Dict[str, Any]
+        Complete analysis results for a column
+    config : QualityAssessmentConfig
+        Configuration with scoring weights
+        
+    Returns
+    -------
+    float
+        Quality score between 0.0 and 1.0
+    """
+    score = 1.0
+    basic_quality = column_analysis.get("basic_quality", {})
+    
+    # Missing values penalty
+    missing_pct = (basic_quality.get("nan_count", 0) / basic_quality.get("total_rows", 1)) * 100
+    if missing_pct > config.critical_missing_threshold:
+        score -= config.missing_weight * 0.8  # Severe penalty
+    elif missing_pct > config.high_missing_threshold:
+        score -= config.missing_weight * 0.4  # Moderate penalty
+    elif missing_pct > 0:
+        score -= config.missing_weight * 0.1  # Minor penalty
+    
+    # Quality issues penalty
+    if not basic_quality.get("is_clean", True):
+        score -= config.quality_issues_weight * 0.5
+    
+    # Outliers penalty (for numeric columns)
+    outliers = column_analysis.get("outliers", {})
+    outlier_pct = outliers.get("outlier_percentage", 0)
+    if outlier_pct > config.high_outlier_threshold:
+        score -= config.outlier_weight * 0.6
+    elif outlier_pct > 5:
+        score -= config.outlier_weight * 0.3
+    
+    # Distribution issues penalty (for numeric columns)
+    distribution = column_analysis.get("distribution", {})
+    if distribution.get("distribution_type") == "unknown":
+        score -= config.distribution_weight * 0.2
+    
+    return max(0.0, score)
+
+
+def analyze_categorical_data_enhanced(series: pd.Series, config: QualityAssessmentConfig) -> Dict[str, Any]:
+    """
+    Enhanced categorical data analysis with configuration support.
+    
+    Parameters
+    ----------
+    series : pd.Series
+        Categorical data to analyze
+    config : QualityAssessmentConfig
+        Configuration settings
+        
+    Returns
+    -------
+    Dict[str, Any]
+        Analysis results for categorical data
+    """
+    # Use existing implementation but with enhanced configuration
+    # This is a placeholder - the full implementation would use config parameters
+    # for now, fall back to existing implementation
+    try:
+        return analyze_categorical_data_original(series)
+    except NameError:
+        # Simplified implementation if original doesn't exist
+        return {
+            "unique_count": series.nunique(),
+            "most_frequent": dict(series.value_counts().head().items()) if len(series) > 0 else {},
+            "has_leading_trailing_spaces": False,
+            "has_special_characters": False,
+            "has_mixed_case": False,
+            "encoding_issues": False,
+            "length_statistics": {},
+            "summary": "Basic categorical analysis"
+        }
+
+
 def _generate_column_recommendations(
-    results: Dict[str, Any], 
-    column_type: str
+    results: Dict[str, Any],
+    expected_type: str,
+    config: QualityAssessmentConfig
 ) -> List[str]:
     """
     Generate actionable recommendations based on column analysis results.
@@ -2284,16 +2701,19 @@ def _generate_column_recommendations(
         recommendations.append("Standardize data types within column")
 
     # Type-specific recommendations
-    if column_type == "numeric":
+    if expected_type == "numeric":
         outliers = results.get("outliers", {})
-        if outliers.get("outlier_percentage", 0) > 5:
+        outlier_pct = outliers.get("outlier_percentage", 0)
+        if outlier_pct > config.high_outlier_threshold:
+            recommendations.append(f"High outlier percentage ({outlier_pct:.1f}%) - consider outlier treatment")
+        elif outlier_pct > 5:
             recommendations.append("Consider outlier treatment (removal, capping, or transformation)")
         
         distribution = results.get("distribution", {})
         if abs(distribution.get("skewness", 0)) > 1:
             recommendations.append("Consider log transformation for highly skewed data")
     
-    elif column_type == "datetime":
+    elif expected_type == "datetime":
         type_specific = results.get("type_specific", {})
         if type_specific.get("conversion_errors", 0) > 0:
             recommendations.append("Fix datetime parsing errors or standardize date formats")
@@ -2302,7 +2722,7 @@ def _generate_column_recommendations(
         if type_specific.get("very_old_dates", 0) > 0:
             recommendations.append("Validate very old dates for accuracy")
     
-    elif column_type == "categorical":
+    elif expected_type == "categorical":
         type_specific = results.get("type_specific", {})
         if type_specific.get("has_leading_trailing_spaces", False):
             recommendations.append("Strip leading/trailing spaces from categories")
@@ -2318,6 +2738,8 @@ def analyze_dataframe_comprehensive(
     df: pd.DataFrame,
     column_types: Optional[Dict[str, str]] = None,
     correlation_threshold: float = 0.95,
+    config: Optional[QualityAssessmentConfig] = None,
+    progress_tracker: Optional[ProgressTracker] = None,
 ) -> Dict[str, Any]:
     """
     Perform comprehensive quality analysis on an entire DataFrame.
@@ -2338,6 +2760,10 @@ def analyze_dataframe_comprehensive(
     correlation_threshold : float, default 0.95
         Threshold for flagging highly correlated numeric columns. Correlations
         above this threshold may indicate redundant features or data leakage.
+    config : QualityAssessmentConfig, optional
+        Configuration object with analysis parameters. If None, uses DEFAULT_CONFIG.
+    progress_tracker : ProgressTracker, optional
+        Progress tracker for reporting analysis progress.
 
     Returns
     -------
@@ -2370,8 +2796,9 @@ def analyze_dataframe_comprehensive(
     >>> df.loc[10:20, 'sales'] = np.nan
     >>> df.loc[100, 'outlier_col'] = np.inf
     >>> 
-    >>> # Perform comprehensive analysis
-    >>> analysis = analyze_dataframe_comprehensive(df)
+    >>> # Perform comprehensive analysis with custom config
+    >>> config = QualityAssessmentConfig(enable_progress_tracking=True)
+    >>> analysis = analyze_dataframe_comprehensive(df, config=config)
     >>> print(f"Overall Quality Score: {analysis['overall_quality_score']:.2f}")
     >>> print(f"Priority Issues: {len(analysis['priority_issues'])} columns")
     >>> 
@@ -2404,11 +2831,19 @@ def analyze_dataframe_comprehensive(
     
     **Priority Issues Criteria:**
     Columns are flagged as priority issues if they have:
-    - >20% missing values
-    - >10% outliers
+    - >20% missing values (configurable via config.high_missing_threshold)
+    - >10% outliers (configurable via config.high_outlier_threshold)  
     - Significant data quality problems
     - Mixed data types or parsing errors
     """
+    # Use default config if none provided
+    if config is None:
+        config = DEFAULT_CONFIG
+    
+    # Use default progress tracker if none provided
+    if progress_tracker is None:
+        progress_tracker = ProgressTracker(enabled=False)
+    
     results = {
         "shape": df.shape,
         "memory_usage_mb": df.memory_usage(deep=True).sum() / 1024 / 1024,
@@ -2427,11 +2862,14 @@ def analyze_dataframe_comprehensive(
     for col in df.columns:
         col_type = column_types.get(col)
         results["column_analyses"][col] = analyze_column_comprehensive(
-            df[col], column_type=col_type
+            df[col], expected_type=col_type, config=config
         )
-
+        
+        # Update progress
+        progress_tracker.update(1, "Analyzing columns")
+        
         # Calculate quality score for column
-        col_quality_score = _calculate_column_quality_score(results["column_analyses"][col])
+        col_quality_score = _calculate_column_quality_score(results["column_analyses"][col], config)
         quality_scores.append(col_quality_score)
 
     # Analyze duplicate rows
@@ -2450,50 +2888,6 @@ def analyze_dataframe_comprehensive(
     results["summary"] = _generate_dataframe_summary(results)
 
     return results
-
-
-def _calculate_column_quality_score(column_analysis: Dict[str, Any]) -> float:
-    """
-    Calculate a quality score for a single column based on its analysis results.
-    
-    Parameters
-    ----------
-    column_analysis : Dict[str, Any]
-        Complete analysis results for a single column
-        
-    Returns
-    -------
-    float
-        Quality score between 0.0 (poor) and 1.0 (excellent)
-    """
-    basic_quality = column_analysis.get("basic_quality", {})
-    
-    # Count major quality issues
-    issues = sum([
-        basic_quality.get("nan_count", 0) > 0,
-        basic_quality.get("inf_count", 0) > 0,
-        basic_quality.get("ninf_count", 0) > 0,
-        basic_quality.get("non_numeric_count", 0) > 0,
-        basic_quality.get("mixed_types", False),
-    ])
-    
-    # Additional penalties for severe issues
-    nan_rate = (basic_quality.get("nan_count", 0) / basic_quality.get("total_rows", 1)) * 100
-    if nan_rate > 50:
-        issues += 2  # Heavy penalty for high missing rates
-    elif nan_rate > 20:
-        issues += 1  # Moderate penalty
-    
-    # Check for outlier issues
-    outliers = column_analysis.get("outliers", {})
-    if outliers.get("outlier_percentage", 0) > 10:
-        issues += 1
-    
-    # Base score starts at 1.0 and deducts for each issue
-    max_possible_issues = 8  # Maximum realistic number of major issues
-    quality_score = max(0.0, 1.0 - (issues / max_possible_issues))
-    
-    return quality_score
 
 
 def _analyze_duplicate_rows(df: pd.DataFrame) -> Dict[str, Any]:
@@ -2670,8 +3064,13 @@ def _generate_dataframe_summary(results: Dict[str, Any]) -> str:
 def generate_quality_report(
     df: pd.DataFrame,
     output_file: Optional[str] = None,
+    json_output_file: Optional[str] = None,
     column_types: Optional[Dict[str, str]] = None,
-) -> str:
+    correlation_threshold: float = 0.95,
+    silent: Optional[bool] = None,
+    config: Optional[QualityAssessmentConfig] = None,
+    enable_progress: Optional[bool] = None
+) -> Optional[Tuple[Optional[str], Dict[str, Any]]]:
     """
     Generate a comprehensive, human-readable data quality report for a DataFrame.
 
@@ -2684,17 +3083,23 @@ def generate_quality_report(
     df : pd.DataFrame
         The DataFrame to analyze and report on.
     output_file : str, optional
-        If provided, save the report to this file path. The report will be
-        saved as plain text with proper formatting for readability.
+        If provided, save the text report to this file path.
+    json_output_file : str, optional
+        If provided, save the JSON report to this file path.
     column_types : Dict[str, str], optional
         Dictionary mapping column names to types ('numeric', 'datetime', 'categorical').
         If None, types will be automatically detected.
+    correlation_threshold : float, default 0.95
+        Threshold for reporting correlations.
+    silent : bool, optional
+        If True, suppress console output. If None (default), automatically
+        set to True when output_file or json_output_file is provided, False otherwise.
 
     Returns
     -------
-    str
-        The complete formatted quality report as a string. Can be printed
-        directly or saved to a file for documentation purposes.
+    Optional[Tuple[Optional[str], Dict[str, Any]]]
+        Text report (None if silent=True and files written) and JSON data,
+        or None if silent=True and output files specified
 
     Examples
     --------
@@ -2715,10 +3120,12 @@ def generate_quality_report(
     >>> 
     >>> # Generate and print report
     >>> report = generate_quality_report(df)
-    >>> print(report)
+    >>> if report and report[0]:
+    ...     print(report[0])
     >>> 
-    >>> # Save report to file
-    >>> report = generate_quality_report(df, output_file='data_quality_report.txt')
+    >>> # Save report to files
+    >>> generate_quality_report(df, output_file='quality_report.txt', 
+    ...                        json_output_file='quality_report.json')
 
     Notes
     -----
@@ -2743,8 +3150,40 @@ def generate_quality_report(
     - **Preprocessing Planning**: Identify necessary cleaning steps
     - **Stakeholder Communication**: Share data quality status with non-technical teams
     """
+    # Use default config if none provided
+    if config is None:
+        config = DEFAULT_CONFIG
+    
+    # Auto-determine silent mode if not explicitly set
+    if silent is None:
+        silent = bool(output_file or json_output_file)
+    
+    # Auto-determine progress tracking if not explicitly set
+    if enable_progress is None:
+        enable_progress = config.enable_progress_tracking and not silent
+    
+    # Initialize progress tracker
+    progress = ProgressTracker(enabled=enable_progress, total=len(df.columns))
+    
+    # Check if chunked processing should be used
+    memory_mb = estimate_memory_usage(df)
+    use_chunking = should_use_chunked_processing(df, config)
+    
+    if enable_progress:
+        logger.info(f"Starting quality assessment for DataFrame: {df.shape} "
+                    f"({memory_mb:.1f} MB)")
+        if use_chunking:
+            chunk_size = config.get_effective_chunk_size(df)
+            logger.info(f"Using chunked processing with chunk size: {chunk_size}")
+    
     # Perform comprehensive analysis
-    analysis = analyze_dataframe_comprehensive(df, column_types=column_types)
+    analysis = analyze_dataframe_comprehensive(
+        df,
+        column_types=column_types,
+        correlation_threshold=correlation_threshold,
+        config=config,
+        progress_tracker=progress
+    )
 
     # Build report sections
     report_sections = []
@@ -2797,18 +3236,43 @@ def generate_quality_report(
     ])
 
     # Combine all sections
-    report = "\n".join(report_sections)
+    text_report = "\n".join(report_sections)
+    
+    # Prepare JSON data
+    json_data = {
+        'timestamp': datetime.now().isoformat(),
+        'basic_stats': {
+            'shape': analysis['shape'],
+            'memory_usage_mb': analysis['memory_usage_mb'],
+            'duplicate_rows': analysis['duplicate_rows']
+        },
+        'column_analyses': analysis['column_analyses'],
+        'correlations': analysis['correlations'],
+        'priority_issues': analysis['priority_issues'],
+        'overall_quality_score': analysis['overall_quality_score'],
+        'summary': analysis['summary']
+    }
 
-    # Save to file if requested
+    # Save files if requested
     if output_file:
-        try:
-            with open(output_file, "w", encoding="utf-8") as f:
-                f.write(report)
-            print(f"Report saved to: {output_file}")
-        except Exception as e:
-            logger.warning(f"Could not save report to {output_file}: {str(e)}")
-
-    return report
+        with open(output_file, 'w', encoding='utf-8') as f:
+            f.write(text_report)
+        logger.info(f"Text report saved to {output_file}")
+    
+    if json_output_file:
+        with open(json_output_file, 'w', encoding='utf-8') as f:
+            # Convert numpy types before JSON serialization
+            json_serializable_data = convert_numpy_types(json_data)
+            json.dump(json_serializable_data, f, indent=2, default=str)
+        logger.info(f"JSON report saved to {json_output_file}")
+    
+    # Return results based on silent mode
+    if silent and (output_file or json_output_file):
+        return None
+    elif silent:
+        return None, convert_numpy_types(json_data)
+    else:
+        return text_report, convert_numpy_types(json_data)
 
 
 def _format_column_section(col: str, col_analysis: Dict[str, Any]) -> List[str]:
@@ -3073,3 +3537,66 @@ if __name__ == "__main__":
 
     print("\nDemonstration completed!")
     print("The framework is ready for use with your own datasets.")
+
+
+# CLI interface functions for integration
+def create_data_quality_cli():
+    """Create CLI interface for data quality assessment."""
+    import argparse
+    
+    parser = argparse.ArgumentParser(
+        description="Comprehensive Data Quality Assessment"
+    )
+    parser.add_argument(
+        "input_file",
+        help="Path to the CSV file containing data to analyze"
+    )
+    parser.add_argument(
+        "--output",
+        help="Path to save the text report"
+    )
+    parser.add_argument(
+        "--json-output",
+        help="Path to save the JSON report"
+    )
+    parser.add_argument(
+        "--correlation-threshold",
+        type=float,
+        default=0.95,
+        help="Correlation threshold for reporting (default: 0.95)"
+    )
+    parser.add_argument(
+        "--column-types",
+        help="JSON string mapping column names to types (numeric, datetime, categorical)"
+    )
+    
+    return parser
+
+
+if __name__ == "__main__":
+    # Example usage
+    parser = create_data_quality_cli()
+    args = parser.parse_args()
+    
+    try:
+        df = pd.read_csv(args.input_file)
+        
+        # Parse column types if provided
+        column_types = None
+        if args.column_types:
+            column_types = json.loads(args.column_types)
+        
+        result = generate_quality_report(
+            df,
+            output_file=args.output,
+            json_output_file=args.json_output,
+            column_types=column_types,
+            correlation_threshold=args.correlation_threshold
+        )
+        
+        if result and result[0]:  # Only print if result exists and text_report is not None
+            print(result[0])
+            
+    except Exception as e:
+        logger.error(f"Error processing file: {e}")
+        raise

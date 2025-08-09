@@ -1,0 +1,2244 @@
+{
+  "timestamp": "2025-08-09T00:40:16.131077",
+  "basic_stats": {
+    "shape": [
+      8423,
+      39
+    ],
+    "memory_usage_mb": 7.58,
+    "numeric_columns": 28,
+    "non_numeric_columns": 11,
+    "total_missing_values": 26906,
+    "missing_percentage": 8.19
+  },
+  "signal_dictionary": {
+    "soc": {
+      "expanded": "soc",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "soh": {
+      "expanded": "soh",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "route_id": {
+      "expanded": "route id",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "longitude": {
+      "expanded": "longitude",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "latitude": {
+      "expanded": "latitude",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "altitude": {
+      "expanded": "altitude",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "timestamp_gps_utc": {
+      "expanded": "timestamp gps utc",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "car_id": {
+      "expanded": "car id",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "time_diff": {
+      "expanded": "time diff",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "point_geom": {
+      "expanded": "point geom",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "route_code": {
+      "expanded": "route code",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "driver": {
+      "expanded": "driver",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "start_timestamp": {
+      "expanded": "start timestamp",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "end_timestamp": {
+      "expanded": "end timestamp",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "car_code": {
+      "expanded": "car code",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "car_description": {
+      "expanded": "car description",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "capacity": {
+      "expanded": "capacity",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "ref_consumption": {
+      "expanded": "ref consumption",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "timestamp_weather_utc": {
+      "expanded": "timestamp weather utc",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "wind_mph": {
+      "expanded": "wind mph",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "wind_kph": {
+      "expanded": "wind kph",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "wind_degree": {
+      "expanded": "wind degree",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "wind_dir": {
+      "expanded": "wind dir",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "Frontal_Wind": {
+      "expanded": "Frontal Wind",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "Veh_deg": {
+      "expanded": "Veh deg",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "totalVehicles": {
+      "expanded": "totalVehicles",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "speedAvg": {
+      "expanded": "speedAvg",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "cars_by_speed_interval_0_80": {
+      "expanded": "cars by speed interval 0 80",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "cars_by_speed_interval_80_100": {
+      "expanded": "cars by speed interval 80 100",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "cars_by_speed_interval_100_120": {
+      "expanded": "cars by speed interval 100 120",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "cars_by_speed_interval_0_50": {
+      "expanded": "cars by speed interval 0 50",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "cars_by_speed_interval_50_80": {
+      "expanded": "cars by speed interval 50 80",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "cars_by_speed_interval_80_120": {
+      "expanded": "cars by speed interval 80 120",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "cars_by_speed_interval_120_inf": {
+      "expanded": "cars by speed interval 120 inf",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "cars_by_length_interval_0_7": {
+      "expanded": "cars by length interval 0 7",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "cars_by_length_interval_7_inf": {
+      "expanded": "cars by length interval 7 inf",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "max_speed": {
+      "expanded": "max speed",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "radius": {
+      "expanded": "radius",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    },
+    "label": {
+      "expanded": "label",
+      "description": "Signal not in dictionary; description inferred heuristically.",
+      "units": "",
+      "domain": "Unknown"
+    }
+  },
+  "signal_quality": {
+    "soc": {
+      "data_type": "int64",
+      "signal_info": {
+        "expanded": "soc",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 0,
+      "missing_percentage": 0.0,
+      "unique_count": 60,
+      "zero_count": 0,
+      "range_validation": {
+        "signal_type": null,
+        "signal_info": {
+          "expanded": "soc",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "has_violations": false,
+        "soft_violations": 0,
+        "hard_violations": 0,
+        "violation_percentage": 0.0,
+        "violations": [],
+        "expected_range": null,
+        "actual_range": {
+          "min": 38.0,
+          "max": 97.0
+        },
+        "summary": "Signal identified as unknown - no range validation available. Dictionary info: soc"
+      },
+      "conditional_signal": {
+        "is_conditional_signal": false,
+        "zero_percentage": 0.0,
+        "analysis": "Not identified as a conditional signal"
+      },
+      "stability": {
+        "is_constant": false,
+        "constant_value": null,
+        "unique_ratio": 0.0071,
+        "saturation": {
+          "min_hits_pct": 0.25,
+          "max_hits_pct": 0.11,
+          "is_saturated": false
+        }
+      },
+      "min": 38.0,
+      "max": 97.0,
+      "mean": 74.80600736079782,
+      "std": 12.897256781564664
+    },
+    "soh": {
+      "data_type": "float64",
+      "signal_info": {
+        "expanded": "soh",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 0,
+      "missing_percentage": 0.0,
+      "unique_count": 1,
+      "zero_count": 0,
+      "range_validation": {
+        "signal_type": null,
+        "signal_info": {
+          "expanded": "soh",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "has_violations": false,
+        "soft_violations": 0,
+        "hard_violations": 0,
+        "violation_percentage": 0.0,
+        "violations": [],
+        "expected_range": null,
+        "actual_range": {
+          "min": 98.5,
+          "max": 98.5
+        },
+        "summary": "Signal identified as unknown - no range validation available. Dictionary info: soh"
+      },
+      "conditional_signal": {
+        "is_conditional_signal": false,
+        "zero_percentage": 0.0,
+        "analysis": "Not identified as a conditional signal"
+      },
+      "stability": {
+        "is_constant": true,
+        "constant_value": 98.5,
+        "unique_ratio": 0.0001,
+        "saturation": {
+          "min_hits_pct": 0.0,
+          "max_hits_pct": 0.0,
+          "is_saturated": false
+        }
+      },
+      "min": 98.5,
+      "max": 98.5,
+      "mean": 98.5,
+      "std": 0.0
+    },
+    "route_id": {
+      "data_type": "int64",
+      "signal_info": {
+        "expanded": "route id",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 0,
+      "missing_percentage": 0.0,
+      "unique_count": 29,
+      "zero_count": 0,
+      "range_validation": {
+        "signal_type": null,
+        "signal_info": {
+          "expanded": "route id",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "has_violations": false,
+        "soft_violations": 0,
+        "hard_violations": 0,
+        "violation_percentage": 0.0,
+        "violations": [],
+        "expected_range": null,
+        "actual_range": {
+          "min": 1.0,
+          "max": 57.0
+        },
+        "summary": "Signal identified as unknown - no range validation available. Dictionary info: route id"
+      },
+      "conditional_signal": {
+        "is_conditional_signal": false,
+        "zero_percentage": 0.0,
+        "analysis": "Not identified as a conditional signal"
+      },
+      "stability": {
+        "is_constant": false,
+        "constant_value": null,
+        "unique_ratio": 0.0034,
+        "saturation": {
+          "min_hits_pct": 0.88,
+          "max_hits_pct": 5.05,
+          "is_saturated": false
+        }
+      },
+      "min": 1.0,
+      "max": 57.0,
+      "mean": 31.999525109818354,
+      "std": 17.922237626249544
+    },
+    "longitude": {
+      "data_type": "float64",
+      "signal_info": {
+        "expanded": "longitude",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 0,
+      "missing_percentage": 0.0,
+      "unique_count": 8126,
+      "zero_count": 0,
+      "range_validation": {
+        "signal_type": "LONGITUDE",
+        "signal_info": {
+          "expanded": "longitude",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "has_violations": false,
+        "soft_violations": 0,
+        "hard_violations": 0,
+        "soft_violation_percentage": 0.0,
+        "hard_violation_percentage": 0.0,
+        "violations": {
+          "soft": [],
+          "hard": []
+        },
+        "expected_range": {
+          "unit": "deg",
+          "soft_min": -180,
+          "soft_max": 180,
+          "hard_min": -180,
+          "hard_max": 180
+        },
+        "actual_range": {
+          "min": -2.8795905,
+          "max": -1.7802104
+        },
+        "summary": "Signal 'longitude' identified as LONGITUDE. Soft violations: 0 (0.0%) outside typical range [-180, 180] deg. Hard violations: 0 (0.0%) outside physical range [-180, 180] deg. Domain: Unknown"
+      },
+      "conditional_signal": {
+        "is_conditional_signal": false,
+        "zero_percentage": 0.0,
+        "analysis": "Not identified as a conditional signal"
+      },
+      "stability": {
+        "is_constant": false,
+        "constant_value": null,
+        "unique_ratio": 0.9647,
+        "saturation": {
+          "min_hits_pct": 0.01,
+          "max_hits_pct": 0.01,
+          "is_saturated": false
+        }
+      },
+      "min": -2.8795905,
+      "max": -1.7802104,
+      "mean": -2.126635346622343,
+      "std": 0.23786214551800133
+    },
+    "latitude": {
+      "data_type": "float64",
+      "signal_info": {
+        "expanded": "latitude",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 0,
+      "missing_percentage": 0.0,
+      "unique_count": 7162,
+      "zero_count": 0,
+      "range_validation": {
+        "signal_type": "LATITUDE",
+        "signal_info": {
+          "expanded": "latitude",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "has_violations": false,
+        "soft_violations": 0,
+        "hard_violations": 0,
+        "soft_violation_percentage": 0.0,
+        "hard_violation_percentage": 0.0,
+        "violations": {
+          "soft": [],
+          "hard": []
+        },
+        "expected_range": {
+          "unit": "deg",
+          "soft_min": -90,
+          "soft_max": 90,
+          "hard_min": -90,
+          "hard_max": 90
+        },
+        "actual_range": {
+          "min": 43.10893,
+          "max": 43.347553000000005
+        },
+        "summary": "Signal 'latitude' identified as LATITUDE. Soft violations: 0 (0.0%) outside typical range [-90, 90] deg. Hard violations: 0 (0.0%) outside physical range [-90, 90] deg. Domain: Unknown"
+      },
+      "conditional_signal": {
+        "is_conditional_signal": false,
+        "zero_percentage": 0.0,
+        "analysis": "Not identified as a conditional signal"
+      },
+      "stability": {
+        "is_constant": false,
+        "constant_value": null,
+        "unique_ratio": 0.8503,
+        "saturation": {
+          "min_hits_pct": 0.01,
+          "max_hits_pct": 0.01,
+          "is_saturated": false
+        }
+      },
+      "min": 43.10893,
+      "max": 43.347553000000005,
+      "mean": 43.25001782049151,
+      "std": 0.057249421325586594
+    },
+    "altitude": {
+      "data_type": "float64",
+      "signal_info": {
+        "expanded": "altitude",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 0,
+      "missing_percentage": 0.0,
+      "unique_count": 8167,
+      "zero_count": 0,
+      "range_validation": {
+        "signal_type": "ALTITUDE",
+        "signal_info": {
+          "expanded": "altitude",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "has_violations": false,
+        "soft_violations": 0,
+        "hard_violations": 0,
+        "soft_violation_percentage": 0.0,
+        "hard_violation_percentage": 0.0,
+        "violations": {
+          "soft": [],
+          "hard": []
+        },
+        "expected_range": {
+          "unit": "m",
+          "soft_min": -200,
+          "soft_max": 5000,
+          "hard_min": -500,
+          "hard_max": 9000
+        },
+        "actual_range": {
+          "min": 29.449158,
+          "max": 743.1103
+        },
+        "summary": "Signal 'altitude' identified as ALTITUDE. Soft violations: 0 (0.0%) outside typical range [-200, 5000] m. Hard violations: 0 (0.0%) outside physical range [-500, 9000] m. Domain: Unknown"
+      },
+      "conditional_signal": {
+        "is_conditional_signal": false,
+        "zero_percentage": 0.0,
+        "analysis": "Not identified as a conditional signal"
+      },
+      "stability": {
+        "is_constant": false,
+        "constant_value": null,
+        "unique_ratio": 0.9696,
+        "saturation": {
+          "min_hits_pct": 0.01,
+          "max_hits_pct": 0.01,
+          "is_saturated": false
+        }
+      },
+      "min": 29.449158,
+      "max": 743.1103,
+      "mean": 135.0976812084768,
+      "std": 91.9359070265912
+    },
+    "timestamp_gps_utc": {
+      "data_type": "object",
+      "signal_info": {
+        "expanded": "timestamp gps utc",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 0,
+      "missing_percentage": 0.0,
+      "unique_count": 7670,
+      "zero_count": 0
+    },
+    "car_id": {
+      "data_type": "int64",
+      "signal_info": {
+        "expanded": "car id",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 0,
+      "missing_percentage": 0.0,
+      "unique_count": 2,
+      "zero_count": 0,
+      "range_validation": {
+        "signal_type": null,
+        "signal_info": {
+          "expanded": "car id",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "has_violations": false,
+        "soft_violations": 0,
+        "hard_violations": 0,
+        "violation_percentage": 0.0,
+        "violations": [],
+        "expected_range": null,
+        "actual_range": {
+          "min": 6.0,
+          "max": 7.0
+        },
+        "summary": "Signal identified as unknown - no range validation available. Dictionary info: car id"
+      },
+      "conditional_signal": {
+        "is_conditional_signal": false,
+        "zero_percentage": 0.0,
+        "analysis": "Not identified as a conditional signal"
+      },
+      "stability": {
+        "is_constant": false,
+        "constant_value": null,
+        "unique_ratio": 0.0002,
+        "saturation": {
+          "min_hits_pct": 93.42,
+          "max_hits_pct": 6.58,
+          "is_saturated": true
+        }
+      },
+      "min": 6.0,
+      "max": 7.0,
+      "mean": 6.065772290157901,
+      "std": 0.24789834999883467
+    },
+    "time_diff": {
+      "data_type": "float64",
+      "signal_info": {
+        "expanded": "time diff",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 0,
+      "missing_percentage": 0.0,
+      "unique_count": 1072,
+      "zero_count": 32,
+      "range_validation": {
+        "signal_type": null,
+        "signal_info": {
+          "expanded": "time diff",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "has_violations": false,
+        "soft_violations": 0,
+        "hard_violations": 0,
+        "violation_percentage": 0.0,
+        "violations": [],
+        "expected_range": null,
+        "actual_range": {
+          "min": -1.686,
+          "max": 2.932
+        },
+        "summary": "Signal identified as unknown - no range validation available. Dictionary info: time diff"
+      },
+      "conditional_signal": {
+        "is_conditional_signal": false,
+        "zero_percentage": 0.0,
+        "analysis": "Not identified as a conditional signal"
+      },
+      "stability": {
+        "is_constant": false,
+        "constant_value": null,
+        "unique_ratio": 0.1273,
+        "saturation": {
+          "min_hits_pct": 0.01,
+          "max_hits_pct": 0.01,
+          "is_saturated": false
+        }
+      },
+      "min": -1.686,
+      "max": 2.932,
+      "mean": -0.000896473940401283,
+      "std": 0.28745232467401177
+    },
+    "point_geom": {
+      "data_type": "object",
+      "signal_info": {
+        "expanded": "point geom",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 0,
+      "missing_percentage": 0.0,
+      "unique_count": 8168,
+      "zero_count": 0
+    },
+    "route_code": {
+      "data_type": "object",
+      "signal_info": {
+        "expanded": "route code",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 0,
+      "missing_percentage": 0.0,
+      "unique_count": 29,
+      "zero_count": 0
+    },
+    "driver": {
+      "data_type": "object",
+      "signal_info": {
+        "expanded": "driver",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 0,
+      "missing_percentage": 0.0,
+      "unique_count": 4,
+      "zero_count": 0
+    },
+    "start_timestamp": {
+      "data_type": "object",
+      "signal_info": {
+        "expanded": "start timestamp",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 0,
+      "missing_percentage": 0.0,
+      "unique_count": 29,
+      "zero_count": 0
+    },
+    "end_timestamp": {
+      "data_type": "object",
+      "signal_info": {
+        "expanded": "end timestamp",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 0,
+      "missing_percentage": 0.0,
+      "unique_count": 29,
+      "zero_count": 0
+    },
+    "car_code": {
+      "data_type": "object",
+      "signal_info": {
+        "expanded": "car code",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 0,
+      "missing_percentage": 0.0,
+      "unique_count": 1,
+      "zero_count": 0
+    },
+    "car_description": {
+      "data_type": "object",
+      "signal_info": {
+        "expanded": "car description",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 0,
+      "missing_percentage": 0.0,
+      "unique_count": 1,
+      "zero_count": 0
+    },
+    "capacity": {
+      "data_type": "int64",
+      "signal_info": {
+        "expanded": "capacity",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 0,
+      "missing_percentage": 0.0,
+      "unique_count": 1,
+      "zero_count": 0,
+      "range_validation": {
+        "signal_type": null,
+        "signal_info": {
+          "expanded": "capacity",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "has_violations": false,
+        "soft_violations": 0,
+        "hard_violations": 0,
+        "violation_percentage": 0.0,
+        "violations": [],
+        "expected_range": null,
+        "actual_range": {
+          "min": 33000.0,
+          "max": 33000.0
+        },
+        "summary": "Signal identified as unknown - no range validation available. Dictionary info: capacity"
+      },
+      "conditional_signal": {
+        "is_conditional_signal": false,
+        "zero_percentage": 0.0,
+        "analysis": "Not identified as a conditional signal"
+      },
+      "stability": {
+        "is_constant": true,
+        "constant_value": 33000.0,
+        "unique_ratio": 0.0001,
+        "saturation": {
+          "min_hits_pct": 0.0,
+          "max_hits_pct": 0.0,
+          "is_saturated": false
+        }
+      },
+      "min": 33000.0,
+      "max": 33000.0,
+      "mean": 33000.0,
+      "std": 0.0
+    },
+    "ref_consumption": {
+      "data_type": "int64",
+      "signal_info": {
+        "expanded": "ref consumption",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 0,
+      "missing_percentage": 0.0,
+      "unique_count": 1,
+      "zero_count": 0,
+      "range_validation": {
+        "signal_type": null,
+        "signal_info": {
+          "expanded": "ref consumption",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "has_violations": false,
+        "soft_violations": 0,
+        "hard_violations": 0,
+        "violation_percentage": 0.0,
+        "violations": [],
+        "expected_range": null,
+        "actual_range": {
+          "min": 139.0,
+          "max": 139.0
+        },
+        "summary": "Signal identified as unknown - no range validation available. Dictionary info: ref consumption"
+      },
+      "conditional_signal": {
+        "is_conditional_signal": false,
+        "zero_percentage": 0.0,
+        "analysis": "Not identified as a conditional signal"
+      },
+      "stability": {
+        "is_constant": true,
+        "constant_value": 139.0,
+        "unique_ratio": 0.0001,
+        "saturation": {
+          "min_hits_pct": 0.0,
+          "max_hits_pct": 0.0,
+          "is_saturated": false
+        }
+      },
+      "min": 139.0,
+      "max": 139.0,
+      "mean": 139.0,
+      "std": 0.0
+    },
+    "timestamp_weather_utc": {
+      "data_type": "object",
+      "signal_info": {
+        "expanded": "timestamp weather utc",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 0,
+      "missing_percentage": 0.0,
+      "unique_count": 324,
+      "zero_count": 0
+    },
+    "wind_mph": {
+      "data_type": "float64",
+      "signal_info": {
+        "expanded": "wind mph",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 0,
+      "missing_percentage": 0.0,
+      "unique_count": 10,
+      "zero_count": 0,
+      "range_validation": {
+        "signal_type": "SPEED",
+        "signal_info": {
+          "expanded": "wind mph",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "has_violations": false,
+        "soft_violations": 0,
+        "hard_violations": 0,
+        "soft_violation_percentage": 0.0,
+        "hard_violation_percentage": 0.0,
+        "violations": {
+          "soft": [],
+          "hard": []
+        },
+        "expected_range": {
+          "unit": "km/h",
+          "soft_min": 0,
+          "soft_max": 250,
+          "hard_min": 0,
+          "hard_max": 350
+        },
+        "actual_range": {
+          "min": 2.2,
+          "max": 15.0
+        },
+        "summary": "Signal 'wind mph' identified as SPEED. Soft violations: 0 (0.0%) outside typical range [0, 250] km/h. Hard violations: 0 (0.0%) outside physical range [0, 350] km/h. Domain: Unknown"
+      },
+      "conditional_signal": {
+        "is_conditional_signal": false,
+        "zero_percentage": 0.0,
+        "analysis": "Not identified as a conditional signal"
+      },
+      "stability": {
+        "is_constant": false,
+        "constant_value": null,
+        "unique_ratio": 0.0012,
+        "saturation": {
+          "min_hits_pct": 32.67,
+          "max_hits_pct": 0.36,
+          "is_saturated": true
+        }
+      },
+      "flag_validation": {
+        "is_flag_like": true,
+        "state_count": 10,
+        "states": [
+          2.2,
+          2.5,
+          3.8,
+          4.3,
+          5.6,
+          6.9,
+          8.1,
+          9.4,
+          10.5,
+          15.0
+        ],
+        "analysis": "many-states",
+        "issues": [
+          "Too many distinct states for a status-like signal"
+        ]
+      },
+      "min": 2.2,
+      "max": 15.0,
+      "mean": 5.123827614864063,
+      "std": 2.657532717947224
+    },
+    "wind_kph": {
+      "data_type": "float64",
+      "signal_info": {
+        "expanded": "wind kph",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 0,
+      "missing_percentage": 0.0,
+      "unique_count": 10,
+      "zero_count": 0,
+      "range_validation": {
+        "signal_type": "SPEED",
+        "signal_info": {
+          "expanded": "wind kph",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "has_violations": false,
+        "soft_violations": 0,
+        "hard_violations": 0,
+        "soft_violation_percentage": 0.0,
+        "hard_violation_percentage": 0.0,
+        "violations": {
+          "soft": [],
+          "hard": []
+        },
+        "expected_range": {
+          "unit": "km/h",
+          "soft_min": 0,
+          "soft_max": 250,
+          "hard_min": 0,
+          "hard_max": 350
+        },
+        "actual_range": {
+          "min": 3.6,
+          "max": 24.1
+        },
+        "summary": "Signal 'wind kph' identified as SPEED. Soft violations: 0 (0.0%) outside typical range [0, 250] km/h. Hard violations: 0 (0.0%) outside physical range [0, 350] km/h. Domain: Unknown"
+      },
+      "conditional_signal": {
+        "is_conditional_signal": false,
+        "zero_percentage": 0.0,
+        "analysis": "Not identified as a conditional signal"
+      },
+      "stability": {
+        "is_constant": false,
+        "constant_value": null,
+        "unique_ratio": 0.0012,
+        "saturation": {
+          "min_hits_pct": 32.67,
+          "max_hits_pct": 0.36,
+          "is_saturated": true
+        }
+      },
+      "flag_validation": {
+        "is_flag_like": true,
+        "state_count": 10,
+        "states": [
+          3.6,
+          4.0,
+          6.1,
+          6.8,
+          9.0,
+          11.2,
+          13.0,
+          15.1,
+          16.9,
+          24.1
+        ],
+        "analysis": "many-states",
+        "issues": [
+          "Too many distinct states for a status-like signal"
+        ]
+      },
+      "min": 3.6,
+      "max": 24.1,
+      "mean": 8.256690015433932,
+      "std": 4.2604990732399965
+    },
+    "wind_degree": {
+      "data_type": "int64",
+      "signal_info": {
+        "expanded": "wind degree",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 0,
+      "missing_percentage": 0.0,
+      "unique_count": 37,
+      "zero_count": 0,
+      "range_validation": {
+        "signal_type": null,
+        "signal_info": {
+          "expanded": "wind degree",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "has_violations": false,
+        "soft_violations": 0,
+        "hard_violations": 0,
+        "violation_percentage": 0.0,
+        "violations": [],
+        "expected_range": null,
+        "actual_range": {
+          "min": 7.0,
+          "max": 360.0
+        },
+        "summary": "Signal identified as unknown - no range validation available. Dictionary info: wind degree"
+      },
+      "conditional_signal": {
+        "is_conditional_signal": false,
+        "zero_percentage": 0.0,
+        "analysis": "Not identified as a conditional signal"
+      },
+      "stability": {
+        "is_constant": false,
+        "constant_value": null,
+        "unique_ratio": 0.0044,
+        "saturation": {
+          "min_hits_pct": 0.62,
+          "max_hits_pct": 3.57,
+          "is_saturated": false
+        }
+      },
+      "flag_validation": {
+        "is_flag_like": true,
+        "state_count": 37,
+        "states": [
+          7,
+          9,
+          10,
+          13,
+          20,
+          30,
+          40,
+          50,
+          60,
+          70
+        ],
+        "analysis": "many-states",
+        "issues": [
+          "Too many distinct states for a status-like signal"
+        ]
+      },
+      "min": 7.0,
+      "max": 360.0,
+      "mean": 184.17808381811707,
+      "std": 136.46679466225396
+    },
+    "wind_dir": {
+      "data_type": "object",
+      "signal_info": {
+        "expanded": "wind dir",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 0,
+      "missing_percentage": 0.0,
+      "unique_count": 14,
+      "zero_count": 0
+    },
+    "Frontal_Wind": {
+      "data_type": "float64",
+      "signal_info": {
+        "expanded": "Frontal Wind",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 29,
+      "missing_percentage": 0.34,
+      "unique_count": 8126,
+      "zero_count": 0,
+      "range_validation": {
+        "signal_type": null,
+        "signal_info": {
+          "expanded": "Frontal Wind",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "has_violations": false,
+        "soft_violations": 0,
+        "hard_violations": 0,
+        "violation_percentage": 0.0,
+        "violations": [],
+        "expected_range": null,
+        "actual_range": {
+          "min": -24.050092636511373,
+          "max": 21.59587844896262
+        },
+        "summary": "Signal identified as unknown - no range validation available. Dictionary info: Frontal Wind"
+      },
+      "conditional_signal": {
+        "is_conditional_signal": false,
+        "zero_percentage": 0.0,
+        "analysis": "Not identified as a conditional signal"
+      },
+      "stability": {
+        "is_constant": false,
+        "constant_value": null,
+        "unique_ratio": 0.9681,
+        "saturation": {
+          "min_hits_pct": 0.01,
+          "max_hits_pct": 0.01,
+          "is_saturated": false
+        }
+      },
+      "flag_validation": {
+        "is_flag_like": true,
+        "state_count": 8126,
+        "states": [
+          -24.050092636511373,
+          -24.03206665143896,
+          -23.989712696515344,
+          -23.450843357863647,
+          -23.444588130352727,
+          -23.24561473039352,
+          -22.93161916271508,
+          -22.900252323749573,
+          -22.87978819020765,
+          -22.848344454393647
+        ],
+        "analysis": "many-states",
+        "issues": [
+          "Too many distinct states for a status-like signal"
+        ]
+      },
+      "min": -24.050092636511373,
+      "max": 21.59587844896262,
+      "mean": -0.23826406188108062,
+      "std": 6.7244835023822995
+    },
+    "Veh_deg": {
+      "data_type": "float64",
+      "signal_info": {
+        "expanded": "Veh deg",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 29,
+      "missing_percentage": 0.34,
+      "unique_count": 8073,
+      "zero_count": 289,
+      "range_validation": {
+        "signal_type": null,
+        "signal_info": {
+          "expanded": "Veh deg",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "has_violations": false,
+        "soft_violations": 0,
+        "hard_violations": 0,
+        "violation_percentage": 0.0,
+        "violations": [],
+        "expected_range": null,
+        "actual_range": {
+          "min": -179.90150861264854,
+          "max": 180.0
+        },
+        "summary": "Signal identified as unknown - no range validation available. Dictionary info: Veh deg"
+      },
+      "conditional_signal": {
+        "is_conditional_signal": false,
+        "zero_percentage": 0.0,
+        "analysis": "Not identified as a conditional signal"
+      },
+      "stability": {
+        "is_constant": false,
+        "constant_value": null,
+        "unique_ratio": 0.9618,
+        "saturation": {
+          "min_hits_pct": 0.01,
+          "max_hits_pct": 0.38,
+          "is_saturated": false
+        }
+      },
+      "min": -179.90150861264854,
+      "max": 180.0,
+      "mean": -8.12375855065656,
+      "std": 107.55188873688223
+    },
+    "totalVehicles": {
+      "data_type": "float64",
+      "signal_info": {
+        "expanded": "totalVehicles",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 109,
+      "missing_percentage": 1.29,
+      "unique_count": 175,
+      "zero_count": 0,
+      "range_validation": {
+        "signal_type": null,
+        "signal_info": {
+          "expanded": "totalVehicles",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "has_violations": false,
+        "soft_violations": 0,
+        "hard_violations": 0,
+        "violation_percentage": 0.0,
+        "violations": [],
+        "expected_range": null,
+        "actual_range": {
+          "min": 1.0,
+          "max": 630.0
+        },
+        "summary": "Signal identified as unknown - no range validation available. Dictionary info: totalVehicles"
+      },
+      "conditional_signal": {
+        "is_conditional_signal": false,
+        "zero_percentage": 0.0,
+        "analysis": "Not identified as a conditional signal"
+      },
+      "stability": {
+        "is_constant": false,
+        "constant_value": null,
+        "unique_ratio": 0.021,
+        "saturation": {
+          "min_hits_pct": 0.2,
+          "max_hits_pct": 0.88,
+          "is_saturated": false
+        }
+      },
+      "min": 1.0,
+      "max": 630.0,
+      "mean": 294.53295645898487,
+      "std": 163.64664495166784
+    },
+    "speedAvg": {
+      "data_type": "float64",
+      "signal_info": {
+        "expanded": "speedAvg",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 109,
+      "missing_percentage": 1.29,
+      "unique_count": 78,
+      "zero_count": 0,
+      "range_validation": {
+        "signal_type": "SPEED",
+        "signal_info": {
+          "expanded": "speedAvg",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "has_violations": false,
+        "soft_violations": 0,
+        "hard_violations": 0,
+        "soft_violation_percentage": 0.0,
+        "hard_violation_percentage": 0.0,
+        "violations": {
+          "soft": [],
+          "hard": []
+        },
+        "expected_range": {
+          "unit": "km/h",
+          "soft_min": 0,
+          "soft_max": 250,
+          "hard_min": 0,
+          "hard_max": 350
+        },
+        "actual_range": {
+          "min": 7.0,
+          "max": 151.0
+        },
+        "summary": "Signal 'speedAvg' identified as SPEED. Soft violations: 0 (0.0%) outside typical range [0, 250] km/h. Hard violations: 0 (0.0%) outside physical range [0, 350] km/h. Domain: Unknown"
+      },
+      "conditional_signal": {
+        "is_conditional_signal": false,
+        "zero_percentage": 0.0,
+        "analysis": "Not identified as a conditional signal"
+      },
+      "stability": {
+        "is_constant": false,
+        "constant_value": null,
+        "unique_ratio": 0.0094,
+        "saturation": {
+          "min_hits_pct": 1.49,
+          "max_hits_pct": 2.29,
+          "is_saturated": false
+        }
+      },
+      "min": 7.0,
+      "max": 151.0,
+      "mean": 86.74212172239596,
+      "std": 29.25580239701241
+    },
+    "cars_by_speed_interval_0_80": {
+      "data_type": "float64",
+      "signal_info": {
+        "expanded": "cars by speed interval 0 80",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 5910,
+      "missing_percentage": 70.17,
+      "unique_count": 31,
+      "zero_count": 815,
+      "range_validation": {
+        "signal_type": "SPEED",
+        "signal_info": {
+          "expanded": "cars by speed interval 0 80",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "has_violations": false,
+        "soft_violations": 0,
+        "hard_violations": 0,
+        "soft_violation_percentage": 0.0,
+        "hard_violation_percentage": 0.0,
+        "violations": {
+          "soft": [],
+          "hard": []
+        },
+        "expected_range": {
+          "unit": "km/h",
+          "soft_min": 0,
+          "soft_max": 250,
+          "hard_min": 0,
+          "hard_max": 350
+        },
+        "actual_range": {
+          "min": 0.0,
+          "max": 172.0
+        },
+        "summary": "Signal 'cars by speed interval 0 80' identified as SPEED. Soft violations: 0 (0.0%) outside typical range [0, 250] km/h. Hard violations: 0 (0.0%) outside physical range [0, 350] km/h. Domain: Unknown"
+      },
+      "conditional_signal": {
+        "is_conditional_signal": false,
+        "zero_percentage": 0.0,
+        "analysis": "Not identified as a conditional signal"
+      },
+      "stability": {
+        "is_constant": false,
+        "constant_value": null,
+        "unique_ratio": 0.0123,
+        "saturation": {
+          "min_hits_pct": 32.43,
+          "max_hits_pct": 0.92,
+          "is_saturated": true
+        }
+      },
+      "min": 0.0,
+      "max": 172.0,
+      "mean": 14.273378432152805,
+      "std": 27.6086965106353
+    },
+    "cars_by_speed_interval_80_100": {
+      "data_type": "float64",
+      "signal_info": {
+        "expanded": "cars by speed interval 80 100",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 5714,
+      "missing_percentage": 67.84,
+      "unique_count": 56,
+      "zero_count": 144,
+      "range_validation": {
+        "signal_type": "SPEED",
+        "signal_info": {
+          "expanded": "cars by speed interval 80 100",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "has_violations": true,
+        "soft_violations": 251,
+        "hard_violations": 124,
+        "soft_violation_percentage": 9.27,
+        "hard_violation_percentage": 4.58,
+        "violations": {
+          "soft": [
+            283.0,
+            283.0,
+            283.0,
+            283.0,
+            283.0,
+            283.0,
+            283.0,
+            283.0,
+            283.0,
+            283.0
+          ],
+          "hard": [
+            5003.0,
+            5003.0,
+            5003.0,
+            5003.0,
+            5003.0,
+            5003.0,
+            5003.0,
+            5003.0,
+            5003.0,
+            5003.0
+          ]
+        },
+        "expected_range": {
+          "unit": "km/h",
+          "soft_min": 0,
+          "soft_max": 250,
+          "hard_min": 0,
+          "hard_max": 350
+        },
+        "actual_range": {
+          "min": 0.0,
+          "max": 5003.0
+        },
+        "summary": "Signal 'cars by speed interval 80 100' identified as SPEED. Soft violations: 251 (9.3%) outside typical range [0, 250] km/h. Hard violations: 124 (4.6%) outside physical range [0, 350] km/h. Domain: Unknown"
+      },
+      "conditional_signal": {
+        "is_conditional_signal": false,
+        "zero_percentage": 0.0,
+        "analysis": "Not identified as a conditional signal"
+      },
+      "stability": {
+        "is_constant": false,
+        "constant_value": null,
+        "unique_ratio": 0.0207,
+        "saturation": {
+          "min_hits_pct": 5.32,
+          "max_hits_pct": 4.58,
+          "is_saturated": false
+        }
+      },
+      "min": 0.0,
+      "max": 5003.0,
+      "mean": 313.3185677371724,
+      "std": 1029.9996508145073
+    },
+    "cars_by_speed_interval_100_120": {
+      "data_type": "float64",
+      "signal_info": {
+        "expanded": "cars by speed interval 100 120",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 5524,
+      "missing_percentage": 65.58,
+      "unique_count": 57,
+      "zero_count": 0,
+      "range_validation": {
+        "signal_type": "SPEED",
+        "signal_info": {
+          "expanded": "cars by speed interval 100 120",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "has_violations": true,
+        "soft_violations": 1132,
+        "hard_violations": 475,
+        "soft_violation_percentage": 39.05,
+        "hard_violation_percentage": 16.38,
+        "violations": {
+          "soft": [
+            278.0,
+            278.0,
+            278.0,
+            278.0,
+            278.0,
+            278.0,
+            278.0,
+            278.0,
+            278.0,
+            278.0
+          ],
+          "hard": [
+            409.0,
+            409.0,
+            409.0,
+            409.0,
+            409.0,
+            409.0,
+            409.0,
+            409.0,
+            409.0,
+            409.0
+          ]
+        },
+        "expected_range": {
+          "unit": "km/h",
+          "soft_min": 0,
+          "soft_max": 250,
+          "hard_min": 0,
+          "hard_max": 350
+        },
+        "actual_range": {
+          "min": 40.0,
+          "max": 5583.0
+        },
+        "summary": "Signal 'cars by speed interval 100 120' identified as SPEED. Soft violations: 1132 (39.0%) outside typical range [0, 250] km/h. Hard violations: 475 (16.4%) outside physical range [0, 350] km/h. Domain: Unknown"
+      },
+      "conditional_signal": {
+        "is_conditional_signal": false,
+        "zero_percentage": 0.0,
+        "analysis": "Not identified as a conditional signal"
+      },
+      "stability": {
+        "is_constant": false,
+        "constant_value": null,
+        "unique_ratio": 0.0197,
+        "saturation": {
+          "min_hits_pct": 0.76,
+          "max_hits_pct": 0.9,
+          "is_saturated": false
+        }
+      },
+      "min": 40.0,
+      "max": 5583.0,
+      "mean": 287.8803035529493,
+      "std": 513.8570711127279
+    },
+    "cars_by_speed_interval_0_50": {
+      "data_type": "float64",
+      "signal_info": {
+        "expanded": "cars by speed interval 0 50",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 3008,
+      "missing_percentage": 35.71,
+      "unique_count": 42,
+      "zero_count": 1464,
+      "range_validation": {
+        "signal_type": "SPEED",
+        "signal_info": {
+          "expanded": "cars by speed interval 0 50",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "has_violations": true,
+        "soft_violations": 253,
+        "hard_violations": 175,
+        "soft_violation_percentage": 4.67,
+        "hard_violation_percentage": 3.23,
+        "violations": {
+          "soft": [
+            481.0,
+            481.0,
+            481.0,
+            481.0,
+            481.0,
+            481.0,
+            481.0,
+            481.0,
+            481.0,
+            481.0
+          ],
+          "hard": [
+            481.0,
+            481.0,
+            481.0,
+            481.0,
+            481.0,
+            481.0,
+            481.0,
+            481.0,
+            481.0,
+            481.0
+          ]
+        },
+        "expected_range": {
+          "unit": "km/h",
+          "soft_min": 0,
+          "soft_max": 250,
+          "hard_min": 0,
+          "hard_max": 350
+        },
+        "actual_range": {
+          "min": 0.0,
+          "max": 481.0
+        },
+        "summary": "Signal 'cars by speed interval 0 50' identified as SPEED. Soft violations: 253 (4.7%) outside typical range [0, 250] km/h. Hard violations: 175 (3.2%) outside physical range [0, 350] km/h. Domain: Unknown"
+      },
+      "conditional_signal": {
+        "is_conditional_signal": false,
+        "zero_percentage": 0.0,
+        "analysis": "Not identified as a conditional signal"
+      },
+      "stability": {
+        "is_constant": false,
+        "constant_value": null,
+        "unique_ratio": 0.0078,
+        "saturation": {
+          "min_hits_pct": 27.04,
+          "max_hits_pct": 0.63,
+          "is_saturated": false
+        }
+      },
+      "min": 0.0,
+      "max": 481.0,
+      "mean": 33.586703601108034,
+      "std": 86.92293807391785
+    },
+    "cars_by_speed_interval_50_80": {
+      "data_type": "float64",
+      "signal_info": {
+        "expanded": "cars by speed interval 50 80",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 3008,
+      "missing_percentage": 35.71,
+      "unique_count": 87,
+      "zero_count": 680,
+      "range_validation": {
+        "signal_type": "SPEED",
+        "signal_info": {
+          "expanded": "cars by speed interval 50 80",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "has_violations": true,
+        "soft_violations": 134,
+        "hard_violations": 19,
+        "soft_violation_percentage": 2.47,
+        "hard_violation_percentage": 0.35,
+        "violations": {
+          "soft": [
+            333.0,
+            333.0,
+            333.0,
+            333.0,
+            333.0,
+            333.0,
+            333.0,
+            333.0,
+            333.0,
+            333.0
+          ],
+          "hard": [
+            387.0,
+            387.0,
+            387.0,
+            387.0,
+            387.0,
+            387.0,
+            387.0,
+            387.0,
+            387.0,
+            436.0
+          ]
+        },
+        "expected_range": {
+          "unit": "km/h",
+          "soft_min": 0,
+          "soft_max": 250,
+          "hard_min": 0,
+          "hard_max": 350
+        },
+        "actual_range": {
+          "min": 0.0,
+          "max": 436.0
+        },
+        "summary": "Signal 'cars by speed interval 50 80' identified as SPEED. Soft violations: 134 (2.5%) outside typical range [0, 250] km/h. Hard violations: 19 (0.4%) outside physical range [0, 350] km/h. Domain: Unknown"
+      },
+      "conditional_signal": {
+        "is_conditional_signal": false,
+        "zero_percentage": 0.0,
+        "analysis": "Not identified as a conditional signal"
+      },
+      "stability": {
+        "is_constant": false,
+        "constant_value": null,
+        "unique_ratio": 0.0161,
+        "saturation": {
+          "min_hits_pct": 12.56,
+          "max_hits_pct": 0.18,
+          "is_saturated": false
+        }
+      },
+      "min": 0.0,
+      "max": 436.0,
+      "mean": 81.57285318559556,
+      "std": 76.80894096013971
+    },
+    "cars_by_speed_interval_80_120": {
+      "data_type": "float64",
+      "signal_info": {
+        "expanded": "cars by speed interval 80 120",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 3008,
+      "missing_percentage": 35.71,
+      "unique_count": 87,
+      "zero_count": 584,
+      "range_validation": {
+        "signal_type": "SPEED",
+        "signal_info": {
+          "expanded": "cars by speed interval 80 120",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "has_violations": true,
+        "soft_violations": 966,
+        "hard_violations": 366,
+        "soft_violation_percentage": 17.84,
+        "hard_violation_percentage": 6.76,
+        "violations": {
+          "soft": [
+            271.0,
+            271.0,
+            271.0,
+            271.0,
+            271.0,
+            271.0,
+            271.0,
+            271.0,
+            271.0,
+            271.0
+          ],
+          "hard": [
+            422.0,
+            422.0,
+            422.0,
+            442.0,
+            442.0,
+            442.0,
+            442.0,
+            442.0,
+            442.0,
+            442.0
+          ]
+        },
+        "expected_range": {
+          "unit": "km/h",
+          "soft_min": 0,
+          "soft_max": 250,
+          "hard_min": 0,
+          "hard_max": 350
+        },
+        "actual_range": {
+          "min": 0.0,
+          "max": 525.0
+        },
+        "summary": "Signal 'cars by speed interval 80 120' identified as SPEED. Soft violations: 966 (17.8%) outside typical range [0, 250] km/h. Hard violations: 366 (6.8%) outside physical range [0, 350] km/h. Domain: Unknown"
+      },
+      "conditional_signal": {
+        "is_conditional_signal": false,
+        "zero_percentage": 0.0,
+        "analysis": "Not identified as a conditional signal"
+      },
+      "stability": {
+        "is_constant": false,
+        "constant_value": null,
+        "unique_ratio": 0.0161,
+        "saturation": {
+          "min_hits_pct": 10.78,
+          "max_hits_pct": 0.13,
+          "is_saturated": false
+        }
+      },
+      "min": 0.0,
+      "max": 525.0,
+      "mean": 97.4927054478301,
+      "std": 129.166402886455
+    },
+    "cars_by_speed_interval_120_inf": {
+      "data_type": "float64",
+      "signal_info": {
+        "expanded": "cars by speed interval 120 inf",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 109,
+      "missing_percentage": 1.29,
+      "unique_count": 66,
+      "zero_count": 2857,
+      "range_validation": {
+        "signal_type": "SPEED",
+        "signal_info": {
+          "expanded": "cars by speed interval 120 inf",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "has_violations": true,
+        "soft_violations": 141,
+        "hard_violations": 141,
+        "soft_violation_percentage": 1.7,
+        "hard_violation_percentage": 1.7,
+        "violations": {
+          "soft": [
+            2088.0,
+            2088.0,
+            2088.0,
+            2088.0,
+            2088.0,
+            2088.0,
+            2088.0,
+            2088.0,
+            2088.0,
+            2088.0
+          ],
+          "hard": [
+            2088.0,
+            2088.0,
+            2088.0,
+            2088.0,
+            2088.0,
+            2088.0,
+            2088.0,
+            2088.0,
+            2088.0,
+            2088.0
+          ]
+        },
+        "expected_range": {
+          "unit": "km/h",
+          "soft_min": 0,
+          "soft_max": 250,
+          "hard_min": 0,
+          "hard_max": 350
+        },
+        "actual_range": {
+          "min": 0.0,
+          "max": 5140.0
+        },
+        "summary": "Signal 'cars by speed interval 120 inf' identified as SPEED. Soft violations: 141 (1.7%) outside typical range [0, 250] km/h. Hard violations: 141 (1.7%) outside physical range [0, 350] km/h. Domain: Unknown"
+      },
+      "conditional_signal": {
+        "is_conditional_signal": false,
+        "zero_percentage": 0.0,
+        "analysis": "Not identified as a conditional signal"
+      },
+      "stability": {
+        "is_constant": false,
+        "constant_value": null,
+        "unique_ratio": 0.0079,
+        "saturation": {
+          "min_hits_pct": 34.36,
+          "max_hits_pct": 0.2,
+          "is_saturated": true
+        }
+      },
+      "min": 0.0,
+      "max": 5140.0,
+      "mean": 78.29865287466923,
+      "std": 343.42996368237783
+    },
+    "cars_by_length_interval_0_7": {
+      "data_type": "float64",
+      "signal_info": {
+        "expanded": "cars by length interval 0 7",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 109,
+      "missing_percentage": 1.29,
+      "unique_count": 172,
+      "zero_count": 0,
+      "range_validation": {
+        "signal_type": null,
+        "signal_info": {
+          "expanded": "cars by length interval 0 7",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "has_violations": false,
+        "soft_violations": 0,
+        "hard_violations": 0,
+        "violation_percentage": 0.0,
+        "violations": [],
+        "expected_range": null,
+        "actual_range": {
+          "min": 1.0,
+          "max": 605.0
+        },
+        "summary": "Signal identified as unknown - no range validation available. Dictionary info: cars by length interval 0 7"
+      },
+      "conditional_signal": {
+        "is_conditional_signal": false,
+        "zero_percentage": 0.0,
+        "analysis": "Not identified as a conditional signal"
+      },
+      "stability": {
+        "is_constant": false,
+        "constant_value": null,
+        "unique_ratio": 0.0207,
+        "saturation": {
+          "min_hits_pct": 0.2,
+          "max_hits_pct": 0.34,
+          "is_saturated": false
+        }
+      },
+      "min": 1.0,
+      "max": 605.0,
+      "mean": 245.82006254510463,
+      "std": 140.74244064264101
+    },
+    "cars_by_length_interval_7_inf": {
+      "data_type": "float64",
+      "signal_info": {
+        "expanded": "cars by length interval 7 inf",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 109,
+      "missing_percentage": 1.29,
+      "unique_count": 97,
+      "zero_count": 51,
+      "range_validation": {
+        "signal_type": null,
+        "signal_info": {
+          "expanded": "cars by length interval 7 inf",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "has_violations": false,
+        "soft_violations": 0,
+        "hard_violations": 0,
+        "violation_percentage": 0.0,
+        "violations": [],
+        "expected_range": null,
+        "actual_range": {
+          "min": 0.0,
+          "max": 251.0
+        },
+        "summary": "Signal identified as unknown - no range validation available. Dictionary info: cars by length interval 7 inf"
+      },
+      "conditional_signal": {
+        "is_conditional_signal": false,
+        "zero_percentage": 0.0,
+        "analysis": "Not identified as a conditional signal"
+      },
+      "stability": {
+        "is_constant": false,
+        "constant_value": null,
+        "unique_ratio": 0.0117,
+        "saturation": {
+          "min_hits_pct": 0.61,
+          "max_hits_pct": 0.38,
+          "is_saturated": false
+        }
+      },
+      "min": 0.0,
+      "max": 251.0,
+      "mean": 48.7128939138802,
+      "std": 54.96798897607727
+    },
+    "max_speed": {
+      "data_type": "float64",
+      "signal_info": {
+        "expanded": "max speed",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 22,
+      "missing_percentage": 0.26,
+      "unique_count": 17,
+      "zero_count": 0,
+      "range_validation": {
+        "signal_type": "SPEED",
+        "signal_info": {
+          "expanded": "max speed",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "has_violations": false,
+        "soft_violations": 0,
+        "hard_violations": 0,
+        "soft_violation_percentage": 0.0,
+        "hard_violation_percentage": 0.0,
+        "violations": {
+          "soft": [],
+          "hard": []
+        },
+        "expected_range": {
+          "unit": "km/h",
+          "soft_min": 0,
+          "soft_max": 250,
+          "hard_min": 0,
+          "hard_max": 350
+        },
+        "actual_range": {
+          "min": 8.0,
+          "max": 120.0
+        },
+        "summary": "Signal 'max speed' identified as SPEED. Soft violations: 0 (0.0%) outside typical range [0, 250] km/h. Hard violations: 0 (0.0%) outside physical range [0, 350] km/h. Domain: Unknown"
+      },
+      "conditional_signal": {
+        "is_conditional_signal": false,
+        "zero_percentage": 0.0,
+        "analysis": "Not identified as a conditional signal"
+      },
+      "stability": {
+        "is_constant": false,
+        "constant_value": null,
+        "unique_ratio": 0.002,
+        "saturation": {
+          "min_hits_pct": 24.7,
+          "max_hits_pct": 3.42,
+          "is_saturated": false
+        }
+      },
+      "min": 8.0,
+      "max": 120.0,
+      "mean": 38.24128079990477,
+      "std": 29.686236035887134
+    },
+    "radius": {
+      "data_type": "float64",
+      "signal_info": {
+        "expanded": "radius",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 109,
+      "missing_percentage": 1.29,
+      "unique_count": 19,
+      "zero_count": 0,
+      "range_validation": {
+        "signal_type": null,
+        "signal_info": {
+          "expanded": "radius",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "has_violations": false,
+        "soft_violations": 0,
+        "hard_violations": 0,
+        "violation_percentage": 0.0,
+        "violations": [],
+        "expected_range": null,
+        "actual_range": {
+          "min": 1.0,
+          "max": 19.0
+        },
+        "summary": "Signal identified as unknown - no range validation available. Dictionary info: radius"
+      },
+      "conditional_signal": {
+        "is_conditional_signal": false,
+        "zero_percentage": 0.0,
+        "analysis": "Not identified as a conditional signal"
+      },
+      "stability": {
+        "is_constant": false,
+        "constant_value": null,
+        "unique_ratio": 0.0023,
+        "saturation": {
+          "min_hits_pct": 23.09,
+          "max_hits_pct": 0.18,
+          "is_saturated": false
+        }
+      },
+      "min": 1.0,
+      "max": 19.0,
+      "mean": 3.516839066634592,
+      "std": 3.0815169520369716
+    },
+    "label": {
+      "data_type": "object",
+      "signal_info": {
+        "expanded": "label",
+        "description": "Signal not in dictionary; description inferred heuristically.",
+        "units": "",
+        "domain": "Unknown"
+      },
+      "missing_count": 0,
+      "missing_percentage": 0.0,
+      "unique_count": 29,
+      "zero_count": 0
+    }
+  },
+  "correlations": {
+    "high_correlations_count": 1,
+    "expected_correlations": [],
+    "unexpected_correlations": [
+      {
+        "column1": "wind_mph",
+        "column2": "wind_kph",
+        "correlation": 1.0,
+        "column1_info": {
+          "expanded": "wind mph",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "column2_info": {
+          "expanded": "wind kph",
+          "description": "Signal not in dictionary; description inferred heuristically.",
+          "units": "",
+          "domain": "Unknown"
+        },
+        "explanation": ""
+      }
+    ],
+    "analysis": "Found 1 high correlations (>0.95). 0 expected, 1 unexpected."
+  },
+  "cross_signal": {
+    "wheel_vs_vehicle_speed": [],
+    "speed_positive_rpm_zero_count": 0
+  },
+  "priority_issues": [
+    "Column 'cars_by_speed_interval_0_80': 70.2% missing values",
+    "Column 'cars_by_speed_interval_80_100': 67.8% missing values",
+    "Column 'cars_by_speed_interval_80_100': 4.6% values outside physically possible range",
+    "Column 'cars_by_speed_interval_100_120': 65.6% missing values",
+    "Column 'cars_by_speed_interval_100_120': 16.4% values outside physically possible range",
+    "Column 'cars_by_speed_interval_0_50': 3.2% values outside physically possible range",
+    "Column 'cars_by_speed_interval_80_120': 6.8% values outside physically possible range",
+    "Column 'cars_by_speed_interval_120_inf': 1.7% values outside physically possible range"
+  ],
+  "recommendations": [],
+  "overall_score": 0.8457142857142856
+}
