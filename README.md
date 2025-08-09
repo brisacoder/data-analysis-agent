@@ -14,6 +14,7 @@ The Data Analysis Agent is an intelligent system that transforms natural languag
 - **📈 Multi-Modal Support**: Handles various data science tasks including EDA, ML, and visualization
 - **🛡️ Production-Ready**: Comprehensive error handling, logging, and validation
 - **🔧 Extensible Framework**: Modular design supporting custom agents and workflows
+- **🧪 Comprehensive Testing**: Extensive test suite ensuring reliability and maintainability
 
 ## 🏗️ Architecture
 
@@ -130,25 +131,64 @@ sequenceDiagram
 
 ### Prerequisites
 
-- Python 3.13+
-- OpenAI API key
-- Required data files (questions, tables)
+- **Python 3.13+** (required)
+- **OpenAI API key** for LLM functionality
+- **uv** (recommended) or **pip** for package management
 
 ### Installation
 
-1. **Clone and install**:
+#### Option 1: Using uv (Recommended)
 
-   ```bash
-   git clone <repository-url>
-   cd data-analysis-agent
-   pip install -e .
-   ```
+```bash
+# Clone the repository
+git clone <repository-url>
+cd data-analysis-agent
 
-2. **Configure environment**:
+# Install with uv in development mode
+uv pip install -e .
+
+# Install development dependencies (for testing)
+uv pip install -e ".[dev]"
+```
+
+#### Option 2: Using pip
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd data-analysis-agent
+
+# Create and activate virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install in development mode
+pip install -e .
+
+# Install development dependencies (for testing)
+pip install -e ".[dev]"
+```
+
+### Environment Configuration
+
+1. **Create environment file**:
 
    ```bash
    cp .env.example .env
-   # Edit .env with your configuration
+   ```
+
+2. **Configure your `.env` file**:
+
+   ```env
+   # Required: OpenAI API configuration
+   OPENAI_API_KEY=sk-your-openai-api-key-here
+   
+   # Required: Input data files
+   QUESTIONS_FILE=curated/questions.jsonl
+   ANSWERS_FILE=curated/answers.jsonl
+   
+   # Optional: Logging configuration
+   LOG_LEVEL=INFO
    ```
 
 3. **Prepare data structure**:
@@ -156,20 +196,98 @@ sequenceDiagram
    ```text
    data/
    ├── InfiAgent-DABench/
-   │   └── da-dev-tables/     # CSV data files
-   ├── plan/                  # Generated plans (auto-created)
-   └── code/                  # Generated code (auto-created)
+   │   ├── da-dev-questions.jsonl  # Questions file
+   │   ├── da-dev-labels.jsonl     # Expected answers
+   │   └── da-dev-tables/          # CSV data files
+   ├── plan/                       # Generated plans (auto-created)
+   └── code/                       # Generated code (auto-created)
    ```
 
-### Basic Usage
+### Running the Application
+
+#### Using the Command Line Interface
 
 ```bash
-# Standard execution
+# Standard execution with default settings
+data-analysis-agent
+
+# Or using Python module directly
+python -m data_analysis_agent.cli
+
+# With custom log level
+data-analysis-agent --log-level DEBUG
+
+# Skip cleanup of existing files
+data-analysis-agent --skip-cleanup
+
+# Async version for better performance
+data-analysis-agent-async
+```
+
+#### Using Python Scripts (Legacy)
+
+```bash
+# Main synchronous version
 python main.py
 
+# Async version
+python async_main.py
+
 # With options
-python main.py --log-level DEBUG
-python main.py --skip-cleanup
+python main.py --log-level DEBUG --skip-cleanup
+```
+
+### Running Tests
+
+The project includes a comprehensive test suite covering all major components:
+
+```bash
+# Run all tests
+pytest
+
+# Run tests with verbose output
+pytest -v
+
+# Run specific test files
+pytest tests/test_paths.py
+pytest tests/test_planner.py
+
+# Run tests with coverage reporting
+pytest --cov=data_analysis_agent
+
+# Run tests matching a pattern
+pytest -k "test_paths"
+
+# Run tests requiring API key (integration tests)
+pytest -m "requires_api_key"
+
+# Skip integration tests (if no API key available)
+pytest -m "not requires_api_key"
+```
+
+### Development and Testing Workflow
+
+```bash
+# 1. Set up development environment
+git clone <repository-url>
+cd data-analysis-agent
+uv pip install -e ".[dev]"
+
+# 2. Configure environment
+cp .env.example .env
+# Edit .env with your configuration
+
+# 3. Run tests to verify setup
+pytest
+
+# 4. Run the application
+data-analysis-agent
+
+# 5. Development cycle
+# - Make changes to code
+# - Run relevant tests: pytest tests/test_<module>.py
+# - Run full test suite: pytest
+# - Commit changes
 ```
 
 ## 📋 Configuration
@@ -332,49 +450,106 @@ data_analysis_agent.log
 
 ```text
 data-analysis-agent/
-├── main.py                 # Entry point for main controller
-├── async_main.py           # Entry point for async controller
-├── setup_notebook_path.py  # Helper for notebook imports
-├── src/                    # Source code directory
-│   ├── main.py             # Main controller and orchestration
-│   ├── async_main.py       # Async controller implementation
-│   ├── planner.py          # Planner Agent implementation
-│   ├── coder.py            # Coder Agent implementation
-│   ├── prompts.py          # System prompts for agents
-│   ├── paths.py            # Centralized path management
-│   ├── dataframe_to_dict.py # Schema generation utilities
-│   └── __init__.py         # Package initialization
-├── pyproject.toml          # Project configuration
-├── data/                   # Data directory
-│   ├── plan/               # Generated analysis plans
-│   ├── code/               # Generated Python scripts
-│   └── InfiAgent-DABench/  # Input datasets
-└── notebooks/              # Development notebooks
-    ├── planner.ipynb       # Planner development
-    ├── coder.ipynb         # Coder development
-    └── full_run.ipynb      # End-to-end testing
+├── pyproject.toml              # Project configuration and dependencies
+├── main.py                     # Legacy entry point (sync)
+├── async_main.py              # Legacy entry point (async)
+├── setup_notebook_path.py     # Helper for notebook imports
+├── data_analysis_agent/       # Main package directory
+│   ├── __init__.py           # Package initialization
+│   ├── cli.py                # Command-line interface (sync)
+│   ├── async_cli.py          # Command-line interface (async)
+│   ├── planner.py            # Planner Agent implementation
+│   ├── coder.py              # Coder Agent implementation
+│   ├── prompts.py            # System prompts for agents
+│   ├── paths.py              # Centralized path management
+│   ├── dataframe_to_dict.py  # Schema generation utilities
+│   ├── dataframe_time.py     # Time-based analysis utilities
+│   ├── point_geom.py         # Geometry utilities
+│   └── data_quality_assessment.py # Data quality tools
+├── tests/                     # Comprehensive test suite
+│   ├── __init__.py           # Test package init
+│   ├── conftest.py           # Pytest configuration and fixtures
+│   ├── test_paths.py         # Tests for path management
+│   ├── test_planner.py       # Tests for planner functionality
+│   └── assets/               # Test data and fixtures
+├── data/                      # Data directory (created at runtime)
+│   ├── plan/                 # Generated analysis plans
+│   ├── code/                 # Generated Python scripts
+│   ├── InfiAgent-DABench/    # Input datasets
+│   └── data_analysis_agent.log # Application logs
+├── curated/                   # Curated datasets and examples
+└── notebooks/                 # Development and exploration notebooks
+    ├── planner.ipynb         # Planner development
+    ├── coder.ipynb           # Coder development
+    ├── full_run.ipynb        # End-to-end testing
+    ├── graph.ipynb           # Graph analysis
+    ├── pre_process.ipynb     # Data preprocessing
+    └── questions.ipynb       # Question analysis
 ```
 
 ### Key Components
 
-#### Path Management (`paths.py`)
+#### Path Management (`data_analysis_agent/paths.py`)
 
-Centralized path resolution ensuring consistency:
+Centralized path resolution ensuring consistency across the application:
 
-- Auto-detects project root
-- Resolves relative paths absolutely
-- Manages directory creation and cleanup
+- **Auto-detects project root** from package location
+- **Resolves relative paths** to absolute paths consistently  
+- **Manages directory creation** and cleanup operations
+- **Singleton pattern** ensures consistent path usage
+- **Cross-platform compatibility** for Windows/Unix systems
 
-#### Prompt Engineering (`prompts.py`)
+**Key Features:**
 
-Carefully crafted system prompts for:
+```python
+from data_analysis_agent.paths import get_paths
 
-- **Planner**: Task decomposition guidelines
-- **Coder**: Implementation standards and constraints
+paths = get_paths()
+print(paths.data_dir)      # /path/to/project/data
+print(paths.plan_dir)      # /path/to/project/data/plan
+print(paths.code_dir)      # /path/to/project/data/code
+paths.ensure_directories() # Creates all necessary directories
+```
 
-#### Schema Generation (`dataframe_to_dict.py`)
+#### Prompt Engineering (`data_analysis_agent/prompts.py`)
 
-Converts DataFrame metadata to structured JSON for agent consumption
+Carefully crafted system prompts optimized for each agent:
+
+- **Planner prompts**: Task decomposition guidelines and structured output
+- **Coder prompts**: Implementation standards, best practices, and constraints
+- **Template-based**: Consistent formatting and clear instructions
+- **Context-aware**: Incorporates data schema and requirements
+
+#### Schema Generation (`data_analysis_agent/dataframe_to_dict.py`)
+
+Intelligent DataFrame metadata extraction for agent consumption:
+
+- **Column type detection**: Automatic data type inference
+- **Schema serialization**: JSON format for LLM processing
+- **Metadata preservation**: Maintains important DataFrame information
+- **Error handling**: Robust parsing of various DataFrame formats
+
+#### Testing Framework (`tests/`)
+
+Comprehensive test coverage ensuring system reliability:
+
+```python
+# Run specific test categories
+pytest tests/test_paths.py      # Path management tests (30 tests)
+pytest tests/test_planner.py    # Planner functionality tests (10 tests)
+
+# Test with different configurations
+pytest --log-level DEBUG       # Verbose test output
+pytest -m "not requires_api_key" # Skip API-dependent tests
+pytest --cov=data_analysis_agent # Coverage reporting
+```
+
+**Test Categories:**
+
+- **Unit Tests**: Individual component testing with mocked dependencies
+- **Integration Tests**: End-to-end workflows with real LLM calls
+- **Fixtures**: Reusable test data and configurations
+- **Error Handling**: Comprehensive error condition testing
 
 ### Extending the System
 
@@ -428,16 +603,107 @@ Converts DataFrame metadata to structured JSON for agent consumption
 - **State Preservation**: Maintain progress across partial runs
 - **Resume Capability**: Skip completed items on restart
 
-## 🧪 Testing & Validation
+## 🧪 Testing & Quality Assurance
+
+### Testing Strategy
+
+The project employs a comprehensive testing strategy to ensure reliability and maintainability:
+
+#### Test Structure
+
+```text
+tests/
+├── conftest.py              # Pytest configuration and shared fixtures
+├── test_paths.py           # Path management tests (30 test cases)
+├── test_planner.py         # Planner agent tests (10 test cases)
+└── assets/                 # Test data and sample files
+    ├── test_data.csv       # Sample CSV files for testing
+    └── sample_questions.jsonl # Test question sets
+```
+
+#### Test Categories
+
+1. **Unit Tests**: Individual component testing with isolated functionality
+   - Path resolution and management
+   - Data schema generation
+   - Configuration validation
+   - Error handling mechanisms
+
+2. **Integration Tests**: End-to-end workflow validation
+   - Complete planner-to-coder workflows
+   - Real LLM API interactions (with API key)
+   - File I/O operations and data persistence
+
+3. **Fixture-Based Tests**: Reusable test components
+   - Temporary directory creation
+   - Mock data generation
+   - Environment simulation
+
+#### Test Execution Commands
+
+```bash
+# Complete test suite
+pytest                       # All tests
+pytest -v                   # Verbose output
+pytest --tb=short           # Shorter traceback format
+
+# Coverage analysis
+pytest --cov=data_analysis_agent                    # Basic coverage
+pytest --cov=data_analysis_agent --cov-report=html  # HTML report
+pytest --cov=data_analysis_agent --cov-report=term-missing # Missing lines
+
+# Selective testing
+pytest tests/test_paths.py                    # Specific module
+pytest tests/test_planner.py::TestTask       # Specific test class
+pytest -k "test_initialization"              # Pattern matching
+pytest -m "not requires_api_key"             # Skip API tests
+pytest -m "integration"                      # Integration tests only
+
+# Parallel execution (if pytest-xdist installed)
+pytest -n auto              # Auto-detect CPU cores
+pytest -n 4                 # Use 4 parallel workers
+```
+
+#### Test Configuration
+
+The project uses `pyproject.toml` for test configuration:
+
+```toml
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = ["-v", "--tb=short", "--strict-markers"]
+```
 
 ### Quality Assurance
 
-The system includes multiple validation layers:
+#### Automated Validation Layers
 
 1. **Input Validation**: Environment variables, file existence, data integrity
-2. **Schema Validation**: Pydantic models for structured data
+2. **Schema Validation**: Pydantic models for structured data consistency
 3. **Code Validation**: Syntax checking and best practice enforcement
 4. **Output Validation**: Result verification and completeness checks
+5. **Error Handling**: Graceful degradation and recovery mechanisms
+
+#### Development Quality Gates
+
+```bash
+# Pre-commit quality checks
+pytest                       # All tests must pass
+pytest --cov=data_analysis_agent --cov-fail-under=80  # Minimum 80% coverage
+# Add linting when configured (e.g., black, flake8, mypy)
+```
+
+#### Continuous Integration Readiness
+
+The test suite is designed for CI/CD integration:
+
+- **Fast unit tests**: Run in seconds for quick feedback
+- **Isolated integration tests**: Marked separately for selective execution
+- **Environment flexibility**: Tests work with or without API keys
+- **Comprehensive coverage**: All critical paths validated
 
 ### Development Notebooks
 
@@ -447,49 +713,261 @@ The system includes multiple validation layers:
 
 ## 🔧 Command Line Interface
 
-```bash
-# Basic usage
-python main.py
+### Available Commands
 
-# Advanced options
-python main.py \
-    --log-level DEBUG \
-    --skip-cleanup
+The project provides multiple ways to run the data analysis agent:
+
+#### Primary Commands (Recommended)
+
+```bash
+# Main command-line interface (synchronous)
+data-analysis-agent [options]
+
+# Async command-line interface (better performance)
+data-analysis-agent-async [options]
+
+# Using Python module directly
+python -m data_analysis_agent.cli [options]
+python -m data_analysis_agent.async_cli [options]
 ```
 
-### Available Options
+#### Legacy Commands
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--skip-cleanup` | Preserve existing output files | `False` |
-| `--log-level` | Set logging verbosity | `INFO` |
+```bash
+# Legacy Python scripts (still supported)
+python main.py [options]
+python async_main.py [options]
+```
+
+### Command Line Options
+
+| Option | Description | Default | Example |
+|--------|-------------|---------|---------|
+| `--log-level` | Set logging verbosity | `INFO` | `--log-level DEBUG` |
+| `--skip-cleanup` | Preserve existing output files | `False` | `--skip-cleanup` |
+
+### Usage Examples
+
+```bash
+# Standard execution with default settings
+data-analysis-agent
+
+# Debug mode with verbose logging
+data-analysis-agent --log-level DEBUG
+
+# Preserve existing files (don't clean output directories)
+data-analysis-agent --skip-cleanup
+
+# Async execution for better performance with large datasets
+data-analysis-agent-async --log-level INFO
+
+# Development testing with legacy scripts
+python main.py --log-level DEBUG --skip-cleanup
+```
+
+### Testing Commands
+
+```bash
+# Run all tests
+pytest
+
+# Run tests with verbose output and coverage
+pytest -v --cov=data_analysis_agent
+
+# Run specific test modules
+pytest tests/test_paths.py -v
+pytest tests/test_planner.py -v
+
+# Run tests by category
+pytest -m "not requires_api_key"  # Skip API tests
+pytest -m "requires_api_key"      # Only API tests
+
+# Run tests with custom markers
+pytest -k "test_path" -v          # Tests matching pattern
+```
 
 ## 🚀 Future Enhancements
 
 ### Planned Features
 
-- **Multi-Model Support**: Support for additional LLM providers
-- **Interactive Mode**: Real-time question-answering interface
-- **Result Validation**: Automated testing of generated code
-- **Performance Optimization**: Parallel processing and caching
-- **Web Interface**: Browser-based interaction and monitoring
+#### Near-term (Next Release)
+
+- **Enhanced Test Coverage**: Expand test suite to include coder and integration components
+- **Configuration Management**: More flexible environment and runtime configuration
+- **Error Recovery**: Improved retry mechanisms and state preservation
+- **Performance Optimization**: Caching and parallel processing capabilities
+
+#### Medium-term
+
+- **Multi-Model Support**: Support for additional LLM providers (Anthropic, Azure OpenAI)
+- **Interactive Mode**: Real-time question-answering interface and chat-based interaction
+- **Result Validation**: Automated testing and verification of generated code
+- **Web Interface**: Browser-based interaction, monitoring, and result visualization
+
+#### Long-term
+
 - **Custom Agents**: Framework for domain-specific analysis agents
+- **Plan Optimization**: Learning from execution feedback and performance metrics
+- **Advanced Analytics**: Statistical validation and automated insight generation
+- **Enterprise Features**: Multi-user support, audit trails, and governance
+
+### Development Priorities
+
+1. **Testing Infrastructure**: Complete test coverage for all components
+2. **Documentation**: API documentation and developer guides
+3. **Performance**: Benchmarking and optimization of LLM interactions
+4. **Reliability**: Enhanced error handling and recovery mechanisms
+5. **Usability**: Improved CLI interface and user experience
 
 ### Research Directions
 
-- **Plan Optimization**: Learning from execution feedback
-- **Code Quality Metrics**: Automated code review and improvement
-- **Domain Adaptation**: Specialized agents for specific data science domains
-- **Explainable AI**: Transparent decision making in plan generation
+- **Plan Optimization**: Learning optimal task decomposition patterns
+- **Code Quality Metrics**: Automated code review and improvement suggestions
+- **Domain Adaptation**: Specialized agents for finance, healthcare, science domains
+- **Explainable AI**: Transparent decision making and reasoning chains
+
+## 🔧 Troubleshooting
+
+### Common Issues and Solutions
+
+#### Installation Issues
+
+**Problem**: `uv` command not found
+
+```bash
+# Solution: Install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh  # Unix/macOS
+# Or visit https://docs.astral.sh/uv/getting-started/installation/
+```
+
+**Problem**: Package installation fails with dependency conflicts
+
+```bash
+# Solution: Use clean virtual environment
+uv venv
+source .venv/bin/activate  # Unix/macOS
+# or .venv\Scripts\activate  # Windows
+uv pip install -e ".[dev]"
+```
+
+#### Runtime Issues
+
+**Problem**: `OPENAI_API_KEY` not found
+
+```bash
+# Solution: Check environment configuration
+cp .env.example .env
+# Edit .env file and add your API key
+```
+
+**Problem**: Questions or data files not found
+
+```bash
+# Solution: Verify file paths in .env
+QUESTIONS_FILE=curated/questions.jsonl  # Relative to project root
+ANSWERS_FILE=curated/answers.jsonl      # Relative to project root
+```
+
+**Problem**: Permission errors when creating directories
+
+```bash
+# Solution: Check directory permissions
+ls -la data/  # Unix/macOS
+# Ensure write permissions for data directory
+```
+
+#### Testing Issues
+
+**Problem**: Tests fail with API key requirements
+
+```bash
+# Solution: Skip API-dependent tests
+pytest -m "not requires_api_key"
+
+# Or set test API key
+export OPENAI_API_KEY="test-key-for-unit-tests"
+```
+
+**Problem**: Import errors during testing
+
+```bash
+# Solution: Install in development mode
+pip install -e ".[dev]"
+# Or ensure PYTHONPATH includes project root
+```
+
+#### Performance Issues
+
+**Problem**: Slow LLM responses
+
+```bash
+# Solution: Use async version for better performance
+data-analysis-agent-async
+
+# Or reduce request complexity in prompts
+```
+
+**Problem**: Memory issues with large datasets
+
+```bash
+# Solution: Process data in smaller batches
+# Consider implementing chunking in future versions
+```
+
+### Getting Help
+
+1. **Check Logs**: Look at `data/data_analysis_agent.log` for detailed error information
+2. **Enable Debug Mode**: Run with `--log-level DEBUG` for verbose output
+3. **Test Setup**: Run `pytest tests/test_paths.py -v` to verify basic functionality
+4. **Environment**: Verify all required environment variables are set correctly
+
+### Contributing to Troubleshooting
+
+If you encounter issues not covered here:
+
+1. Check existing GitHub issues
+2. Create a new issue with:
+   - Error message and full traceback
+   - Environment details (OS, Python version, package versions)
+   - Steps to reproduce
+   - Log file contents (if relevant)
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please see our contributing guidelines for:
+Contributions are welcome! Please follow these guidelines:
 
-- Code style and standards
-- Testing requirements
-- Documentation expectations
-- Pull request process
+### Development Setup
+
+```bash
+# 1. Fork and clone the repository
+git clone <your-fork-url>
+cd data-analysis-agent
+
+# 2. Set up development environment
+uv pip install -e ".[dev]"
+
+# 3. Create feature branch
+git checkout -b feature/your-feature-name
+
+# 4. Make changes and test
+pytest  # Ensure all tests pass
+
+# 5. Submit pull request
+```
+
+### Code Standards
+
+- **Testing**: All new code must include comprehensive tests
+- **Documentation**: Update README and docstrings for new features
+- **Style**: Follow existing code patterns and conventions
+- **Commits**: Use clear, descriptive commit messages
+
+### Pull Request Process
+
+1. Ensure all tests pass locally
+2. Update documentation for new features
+3. Add entry to changelog if applicable
+4. Request review from maintainers
 
 ## 📄 License
 
