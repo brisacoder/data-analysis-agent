@@ -24,7 +24,6 @@ Dependencies:
 """
 
 import json
-import os
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -95,7 +94,7 @@ class CodeGenerator:
                     if file.is_file() and not file.name.endswith(".log"):
                         file.unlink()
 
-            os.makedirs(self.code_dir, exist_ok=True)
+            self.code_dir.mkdir(parents=True, exist_ok=True)
             CodeGenerator._initialized = True
 
     def create_code(

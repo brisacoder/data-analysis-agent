@@ -7,6 +7,7 @@ ProjectPaths class, PathsManager singleton, and related utilities.
 
 import tempfile
 import pytest
+import platform
 from pathlib import Path
 
 from data_analysis_agent.paths import (
@@ -374,3 +375,199 @@ class TestIntegration:
         assert instance1.project_root == temp_project.absolute()
         assert instance2.project_root == temp_project.absolute()
         assert instance3.project_root == temp_project.absolute()
+
+
+class TestCrossPlatformCompatibility:
+    """Test cross-platform compatibility features."""
+
+    def setup_method(self):
+        """Reset the singleton before each test."""
+        PathsManager.reset()
+
+    def teardown_method(self):
+        """Reset the singleton after each test."""
+        PathsManager.reset()
+
+    @pytest.fixture
+    def temp_project(self):
+        """Create a temporary project structure for testing."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+
+            # Create a realistic project structure
+            (temp_path / "data").mkdir()
+            (temp_path / "data" / "plan").mkdir()
+            (temp_path / "data" / "code").mkdir()
+            (temp_path / "data" / "InfiAgent-DABench").mkdir()
+            (temp_path / "data" / "InfiAgent-DABench" / "da-dev-tables").mkdir()
+
+            yield temp_path
+
+    def test_path_separators_are_handled_correctly(self, temp_project):
+        """Test that path separators work correctly on all platforms."""
+        project_paths = ProjectPaths(temp_project)
+        
+        # Test that all paths use pathlib and are absolute
+        paths_to_test = [
+            project_paths.project_root,
+            project_paths.data_dir,
+            project_paths.plan_dir,
+            project_paths.code_dir,
+            project_paths.tables_dir,
+            project_paths.log_file,
+            project_paths.merged_plans_file,
+            project_paths.merged_code_file,
+        ]
+        
+        for path in paths_to_test:
+            assert isinstance(path, Path), f"Path {path} should be a Path object"
+            assert path.is_absolute(), f"Path {path} should be absolute"
+            
+            # Test that path parts work correctly
+            parts = path.parts
+            assert len(parts) > 0, f"Path {path} should have parts"
+            
+            # Test string representation works
+            path_str = str(path)
+            assert len(path_str) > 0, f"Path {path} should have string representation"
+
+    def test_directory_operations_work_cross_platform(self, temp_project):
+        """Test that directory operations work on all platforms."""
+        project_paths = ProjectPaths(temp_project)
+        
+        # Test directory creation
+        project_paths.ensure_directories()
+        
+        directories_to_check = [
+            project_paths.data_dir,
+            project_paths.plan_dir,
+            project_paths.code_dir,
+        ]
+        
+        for directory in directories_to_check:
+            assert directory.exists(), f"Directory {directory} should exist"
+            assert directory.is_dir(), f"Path {directory} should be a directory"
+            
+            # Test that we can create files in the directory
+            test_file = directory / "test_file.txt"
+            test_file.write_text("test content")
+            assert test_file.exists()
+            assert test_file.read_text() == "test content"
+            
+            # Clean up
+            test_file.unlink()
+
+    def test_file_operations_work_cross_platform(self, temp_project):
+        """Test that file operations work on all platforms."""
+        project_paths = ProjectPaths(temp_project)
+        project_paths.ensure_directories()
+        
+        # Test various file types and names
+        test_files = [
+            (project_paths.plan_dir / "plan.json", '{"test": "data"}'),
+            (project_paths.code_dir / "code.py", "print('hello')"),
+            (project_paths.plan_dir / "file with spaces.txt", "content"),
+            (project_paths.code_dir / "file-with-dashes.py", "# comment"),
+        ]
+        
+        for file_path, content in test_files:
+            # Write file
+            file_path.write_text(content)
+            assert file_path.exists()
+            assert file_path.read_text() == content
+            
+            # Test file properties
+            assert file_path.is_file()
+            assert file_path.parent.exists()
+            
+        # Test cleanup
+        files_removed = project_paths.clean_output_directories()
+        assert files_removed >= len(test_files)
+
+    def test_path_resolution_works_cross_platform(self, temp_project):
+        """Test that path resolution works correctly."""
+        project_paths = ProjectPaths(temp_project)
+        
+        # Test get_data_file_path with various filename patterns
+        test_filenames = [
+            "simple.csv",
+            "file with spaces.csv",
+            "file-with-dashes.csv",
+            "file_with_underscores.csv",
+            "file.with.dots.csv",
+        ]
+        
+        for filename in test_filenames:
+            resolved_path = project_paths.get_data_file_path(filename)
+            expected_path = project_paths.tables_dir / filename
+            
+            assert resolved_path == expected_path
+            assert isinstance(resolved_path, Path)
+            assert resolved_path.is_absolute()
+
+    def test_auto_detection_works_cross_platform(self):
+        """Test that auto-detection works on the current platform."""
+        project_paths = ProjectPaths()
+        
+        # Should successfully auto-detect
+        assert project_paths.project_root.exists()
+        assert project_paths.project_root.is_dir()
+        
+        # Should be able to find expected project files
+        expected_files = ["pyproject.toml", "README.md"]
+        project_files = [f.name for f in project_paths.project_root.iterdir() if f.is_file()]
+        
+        for expected_file in expected_files:
+            assert expected_file in project_files, f"Expected to find {expected_file} in project root"
+
+    def test_platform_specific_path_features(self, temp_project):
+        """Test platform-specific path features are handled correctly."""
+        project_paths = ProjectPaths(temp_project)
+        
+        # Test absolute path properties
+        abs_path = project_paths.data_dir.absolute()
+        assert abs_path.is_absolute()
+        
+        # Test that paths work with platform-specific features
+        import platform
+        system = platform.system()
+        
+        if system == "Windows":
+            # On Windows, absolute paths should have drive letters
+            path_str = str(abs_path)
+            assert len(path_str) > 2 and path_str[1] == ":", f"Windows path should have drive letter: {path_str}"
+            
+        elif system in ["Linux", "Darwin"]:
+            # On Unix systems, absolute paths should start with /
+            path_str = str(abs_path)
+            assert path_str.startswith("/"), f"Unix path should start with /: {path_str}"
+        
+        # Test path parts work correctly regardless of platform
+        parts = abs_path.parts
+        assert len(parts) > 0
+        assert "data" in parts
+
+    def test_relative_path_handling(self, temp_project):
+        """Test that relative paths are handled correctly."""
+        project_paths = ProjectPaths(temp_project)
+        
+        # Test that all paths are resolved to absolute
+        paths_to_check = [
+            project_paths.data_dir,
+            project_paths.plan_dir,
+            project_paths.code_dir,
+            project_paths.tables_dir,
+        ]
+        
+        for path in paths_to_check:
+            assert path.is_absolute(), f"Path {path} should be absolute"
+            
+            # Test relative_to works
+            try:
+                relative = path.relative_to(project_paths.project_root)
+                # Should be able to reconstruct the absolute path
+                reconstructed = project_paths.project_root / relative
+                assert reconstructed == path
+            except ValueError:
+                # This is okay if paths are on different drives (Windows)
+                pass

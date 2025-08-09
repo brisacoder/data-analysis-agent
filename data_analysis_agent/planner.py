@@ -1,5 +1,4 @@
 import json
-import os
 from datetime import datetime, timezone
 from typing import List, Optional
 from pathlib import Path
@@ -95,7 +94,7 @@ class PlanGenerator:
                     if file.is_file():
                         file.unlink()
 
-            os.makedirs(self.plan_dir, exist_ok=True)
+            self.plan_dir.mkdir(parents=True, exist_ok=True)
             PlanGenerator._initialized = True
 
     def create_plan(self, question: str, df_json: str, data_file_name: Path) -> Plan:
