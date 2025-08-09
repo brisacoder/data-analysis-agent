@@ -6,7 +6,10 @@ It understands the unique characteristics of car telemetry such as conditional s
 expected correlations, and domain-specific validation rules.
 
 Key Features:
-- Automotive-specific signal validation (RPM, speed, temperature ranges)
+- Automotive-specific signal validation with soft/hard ranges
+  * Soft ranges: typical operating conditions (for warnings)
+  * Hard ranges: physically possible limits (for invalidation)
+- Enhanced range validation accounts for unit variations and diverse powertrains
 - Conditional signal analysis (signals only active under certain conditions)
 - Temporal consistency checks for physically impossible changes
 - CAN bus signal quality assessment
@@ -14,9 +17,15 @@ Key Features:
 - JSON and text output formats
 - Configurable correlation reporting thresholds
 
+Range Validation Strategy:
+- Use soft ranges to flag suspicious values that warrant investigation
+- Use hard ranges to identify physically impossible values for invalidation
+- Accounts for unit mix-ups (kPa vs bar vs psi), sensor saturations, and spikes
+- Supports different powertrain types (NA/turbo gasoline, diesel, hybrid/EV)
+
 Author: Reinaldo Penno
 License: MIT
-Version: 1.2.0
+Version: 1.3.0
 """
 
 import json
@@ -67,59 +76,98 @@ def convert_numpy_types(obj):
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Automotive signal ranges and validation rules
+# Enhanced automotive signal ranges and validation rules
+# Uses soft ranges for QA warnings and hard ranges for invalidation
+# Accounts for unit variations, sensor spikes, and diverse powertrain types
 AUTOMOTIVE_SIGNAL_RANGES = {
-    # Engine signals
-    'RPM': {'min': 0, 'max': 8000, 'unit': 'rpm'},
-    'ENGINE_SPEED': {'min': 0, 'max': 8000, 'unit': 'rpm'},
-    'THROTTLE': {'min': 0, 'max': 100, 'unit': '%'},
-    'THROTTLE_POSITION': {'min': 0, 'max': 100, 'unit': '%'},
-    'ACCELERATOR_PEDAL': {'min': 0, 'max': 100, 'unit': '%'},
-    'ENGINE_LOAD': {'min': 0, 'max': 100, 'unit': '%'},
-    'MAF': {'min': 0, 'max': 400, 'unit': 'g/s'},
-    'MAP': {'min': 10, 'max': 300, 'unit': 'kPa'},
-    'AFR_LAMBDA': {'min': 0.7, 'max': 1.5, 'unit': 'λ'},
-    'O2_VOLTAGE': {'min': 0.0, 'max': 1.2, 'unit': 'V'},
-    
-    # Vehicle dynamics
-    'SPEED': {'min': 0, 'max': 300, 'unit': 'km/h'},
-    'VEHICLE_SPEED': {'min': 0, 'max': 300, 'unit': 'km/h'},
-    'ACCELERATION': {'min': -20, 'max': 20, 'unit': 'm/s²'},
-    'WHEEL_SPEED': {'min': 0, 'max': 300, 'unit': 'km/h'},
-    'STEERING_ANGLE': {'min': -900, 'max': 900, 'unit': 'deg'},
-    'STEERING_TORQUE': {'min': -20, 'max': 20, 'unit': 'Nm'},
-    'STEERING_SPEED': {'min': 0, 'max': 1200, 'unit': 'deg/s'},
-    'GEAR': {'min': -1, 'max': 10, 'unit': 'gear'},
-    
-    # Temperatures (typical automotive ranges)
-    'ENGINE_TEMP': {'min': -40, 'max': 150, 'unit': '°C'},
-    'COOLANT_TEMP': {'min': -40, 'max': 150, 'unit': '°C'},
-    'OIL_TEMP': {'min': -40, 'max': 200, 'unit': '°C'},
-    'INTAKE_TEMP': {'min': -40, 'max': 100, 'unit': '°C'},
-    'AMBIENT_TEMP': {'min': -50, 'max': 60, 'unit': '°C'},
-    'ATF_TEMP': {'min': -40, 'max': 180, 'unit': '°C'},
-    'CAT_TEMP': {'min': -40, 'max': 1000, 'unit': '°C'},
-    
-    # Pressures
-    'OIL_PRESSURE': {'min': 0, 'max': 10, 'unit': 'bar'},
-    'FUEL_PRESSURE': {'min': 0, 'max': 10, 'unit': 'bar'},
-    'FUEL_RAIL_PRESSURE': {'min': 0, 'max': 2500, 'unit': 'kPa'},
-    'BOOST_PRESSURE': {'min': -1, 'max': 3, 'unit': 'bar'},
-    'TIRE_PRESSURE_KPA': {'min': 100, 'max': 400, 'unit': 'kPa'},
-    
-    # Electrical
-    'BATTERY_VOLTAGE': {'min': 9, 'max': 16, 'unit': 'V'},
-    'ALTERNATOR_VOLTAGE': {'min': 12, 'max': 15, 'unit': 'V'},
-    'HV_BATTERY_VOLTAGE': {'min': 50, 'max': 800, 'unit': 'V'},
-    
-    # Fuel
-    'FUEL_LEVEL': {'min': 0, 'max': 100, 'unit': '%'},
-    'FUEL_FLOW': {'min': 0, 'max': 50, 'unit': 'L/h'},
-    
-    # GPS/Location
-    'LATITUDE': {'min': -90, 'max': 90, 'unit': 'degrees'},
-    'LONGITUDE': {'min': -180, 'max': 180, 'unit': 'degrees'},
-    'ALTITUDE': {'min': -500, 'max': 9000, 'unit': 'm'},
+    # -------------------- Engine / Powertrain --------------------
+    "RPM": {"unit": "rpm", "soft_min": 0, "soft_max": 7500, "hard_min": 0, "hard_max": 9000},
+    "ENGINE_SPEED": {"unit": "rpm", "soft_min": 0, "soft_max": 7500, "hard_min": 0, "hard_max": 9000},
+
+    "THROTTLE": {"unit": "%", "soft_min": 0, "soft_max": 100, "hard_min": -2, "hard_max": 102},
+    "THROTTLE_POSITION": {"unit": "%", "soft_min": 0, "soft_max": 100, "hard_min": -2, "hard_max": 102},
+    "ACCELERATOR_PEDAL": {"unit": "%", "soft_min": 0, "soft_max": 100, "hard_min": -2, "hard_max": 102},
+
+    # calc load can exceed 100 on boosted engines
+    "ENGINE_LOAD": {"unit": "%", "soft_min": 0, "soft_max": 110, "hard_min": 0, "hard_max": 200},
+
+    "MAF": {"unit": "g/s", "soft_min": 0, "soft_max": 500, "hard_min": 0, "hard_max": 800},
+
+    # MAP is ABSOLUTE pressure (not gauge). Idle ~30–50 kPa abs, WOT NA ~95–105, turbo 120–250+.
+    "MAP": {"unit": "kPa_abs", "soft_min": 30, "soft_max": 300, "hard_min": 20, "hard_max": 400},
+
+    # Lambda (equivalence ratio): stoich ≈ 1.0; rich power ~0.8; lean cruise up to ~1.2; spikes wider.
+    "AFR_LAMBDA": {"unit": "λ", "soft_min": 0.8, "soft_max": 1.2, "hard_min": 0.6, "hard_max": 1.8},
+
+    # Narrowband O2 swings ~0.1–0.9 V; wideband is controller-specific (often not raw volts)
+    "O2_VOLTAGE": {"unit": "V", "soft_min": 0.05, "soft_max": 0.95, "hard_min": 0.0, "hard_max": 1.2},
+
+    # -------------------- Vehicle dynamics --------------------
+    "SPEED": {"unit": "km/h", "soft_min": 0, "soft_max": 250, "hard_min": 0, "hard_max": 350},
+    "VEHICLE_SPEED": {"unit": "km/h", "soft_min": 0, "soft_max": 250, "hard_min": 0, "hard_max": 350},
+
+    # Longitudinal spikes happen (bumps, GPS/IMU fusion); keep hard wide
+    "ACCELERATION": {"unit": "m/s²", "soft_min": -15, "soft_max": 15, "hard_min": -50, "hard_max": 50},
+
+    # Per-wheel speed can exceed vehicle speed during slip/ABS events
+    "WHEEL_SPEED": {"unit": "km/h", "soft_min": 0, "soft_max": 300, "hard_min": 0, "hard_max": 400},
+
+    # Steering ranges vary by rack; 900° is common, some >1080°
+    "STEERING_ANGLE": {"unit": "deg", "soft_min": -720, "soft_max": 720, "hard_min": -1080, "hard_max": 1080},
+
+    # Column torque sensors are small numbers; MDPS motor/output can be much higher. Keep generous hard.
+    "STEERING_TORQUE": {"unit": "N·m", "soft_min": -20, "soft_max": 20, "hard_min": -100, "hard_max": 100},
+
+    # Peak steering velocity can be very high during snaps
+    "STEERING_SPEED": {"unit": "deg/s", "soft_min": 0, "soft_max": 1200, "hard_min": 0, "hard_max": 2000},
+
+    # Include P/N as 0 if you only have numeric; extend hard for CVTs/multispeed EVs
+    "GEAR": {"unit": "gear", "soft_min": -1, "soft_max": 10, "hard_min": -1, "hard_max": 12},
+
+    # -------------------- Temperatures --------------------
+    "ENGINE_TEMP": {"unit": "°C", "soft_min": -20, "soft_max": 115, "hard_min": -40, "hard_max": 130},
+    "COOLANT_TEMP": {"unit": "°C", "soft_min": -20, "soft_max": 115, "hard_min": -40, "hard_max": 130},
+    "OIL_TEMP": {"unit": "°C", "soft_min": 20, "soft_max": 150, "hard_min": -40, "hard_max": 200},
+    # heat soak can exceed 80
+    "INTAKE_TEMP": {"unit": "°C", "soft_min": -20, "soft_max": 80, "hard_min": -40, "hard_max": 140},
+    "AMBIENT_TEMP": {"unit": "°C", "soft_min": -30, "soft_max": 50, "hard_min": -50, "hard_max": 60},
+    "ATF_TEMP": {"unit": "°C", "soft_min": 20, "soft_max": 130, "hard_min": -40, "hard_max": 180},
+    "CAT_TEMP": {"unit": "°C", "soft_min": 300, "soft_max": 950, "hard_min": -40, "hard_max": 1150},
+
+    # -------------------- Pressures --------------------
+    "OIL_PRESSURE": {"unit": "bar", "soft_min": 0.5, "soft_max": 8.0, "hard_min": 0.0, "hard_max": 12.0},
+
+    # Low-side fuel pressure (port injection / feed line)
+    "FUEL_PRESSURE": {"unit": "bar_g", "soft_min": 2.0, "soft_max": 6.0, "hard_min": 0.0, "hard_max": 10.0},
+
+    # High-pressure rail (gasoline GDI). If diesel, see DIESEL_RAIL_PRESSURE below.
+    "FUEL_RAIL_PRESSURE": {"unit": "kPa_abs", "soft_min": 5000, "soft_max": 20000, "hard_min": 0, "hard_max": 25000},
+    "FUEL_RAIL_PRESSURE_GDI": {
+        "unit": "kPa_abs", "soft_min": 5000, "soft_max": 20000, "hard_min": 0, "hard_max": 25000
+    },
+    # Diesel common-rail can be an order of magnitude higher:
+    "DIESEL_RAIL_PRESSURE": {
+        "unit": "kPa_abs", "soft_min": 30000, "soft_max": 180000, "hard_min": 0, "hard_max": 200000
+    },
+
+    # Turbo boost as GAUGE pressure (relative to atmosphere). -1 bar = full vac, >2.0 bar gauge for high boost builds.
+    "BOOST_PRESSURE": {"unit": "bar_g", "soft_min": -0.2, "soft_max": 2.0, "hard_min": -1.0, "hard_max": 3.0},
+
+    "TIRE_PRESSURE_KPA": {"unit": "kPa", "soft_min": 160, "soft_max": 320, "hard_min": 100, "hard_max": 400},
+
+    # -------------------- Electrical --------------------
+    "BATTERY_VOLTAGE": {"unit": "V", "soft_min": 11.5, "soft_max": 15.2, "hard_min": 8.0, "hard_max": 16.5},
+    "ALTERNATOR_VOLTAGE": {"unit": "V", "soft_min": 13.2, "soft_max": 14.8, "hard_min": 12.0, "hard_max": 15.5},
+    "HV_BATTERY_VOLTAGE": {"unit": "V", "soft_min": 150, "soft_max": 750, "hard_min": 50, "hard_max": 1000},
+
+    # -------------------- Fuel quantity / flow --------------------
+    "FUEL_LEVEL": {"unit": "%", "soft_min": 0, "soft_max": 100, "hard_min": -2, "hard_max": 102},
+    "FUEL_FLOW": {"unit": "L/h", "soft_min": 0, "soft_max": 80, "hard_min": 0, "hard_max": 300},
+
+    # -------------------- GPS / Location --------------------
+    "LATITUDE": {"unit": "deg", "soft_min": -90, "soft_max": 90, "hard_min": -90, "hard_max": 90},
+    "LONGITUDE": {"unit": "deg", "soft_min": -180, "soft_max": 180, "hard_min": -180, "hard_max": 180},
+    "ALTITUDE": {"unit": "m", "soft_min": -200, "soft_max": 5000, "hard_min": -500, "hard_max": 9000},
 }
 
 # Signals that are expected to be mostly zero (only active under specific conditions)
@@ -333,6 +381,7 @@ def detect_automotive_signal_type(column_name: str, data: pd.Series) -> Optional
 def check_signal_range_violations(column_name: str, data: pd.Series) -> Dict[str, Any]:
     """
     Check for values outside expected automotive signal ranges.
+    Uses both soft (typical) and hard (physically possible) ranges.
     
     Parameters
     ----------
@@ -353,7 +402,8 @@ def check_signal_range_violations(column_name: str, data: pd.Series) -> Dict[str
             'signal_type': signal_type,
             'signal_info': signal_info,
             'has_violations': False,
-            'violation_count': 0,
+            'soft_violations': 0,
+            'hard_violations': 0,
             'violation_percentage': 0.0,
             'violations': [],
             'expected_range': None,
@@ -365,26 +415,41 @@ def check_signal_range_violations(column_name: str, data: pd.Series) -> Dict[str
         }
     
     expected_range = AUTOMOTIVE_SIGNAL_RANGES[signal_type]
-    min_val, max_val = expected_range['min'], expected_range['max']
+    soft_min, soft_max = expected_range['soft_min'], expected_range['soft_max']
+    hard_min, hard_max = expected_range['hard_min'], expected_range['hard_max']
     
-    # Find violations
-    violations = data[(data < min_val) | (data > max_val)].dropna()
-    violation_count = len(violations)
-    violation_percentage = (violation_count / len(data.dropna())) * 100 if len(data.dropna()) > 0 else 0
+    # Find soft violations (values outside typical operating ranges)
+    soft_violations = data[(data < soft_min) | (data > soft_max)].dropna()
+    soft_violation_count = len(soft_violations)
+    
+    # Find hard violations (values outside physically possible ranges)
+    hard_violations = data[(data < hard_min) | (data > hard_max)].dropna()
+    hard_violation_count = len(hard_violations)
+    
+    total_valid_data = len(data.dropna())
+    soft_violation_percentage = (soft_violation_count / total_valid_data) * 100 if total_valid_data > 0 else 0
+    hard_violation_percentage = (hard_violation_count / total_valid_data) * 100 if total_valid_data > 0 else 0
     
     return {
         'signal_type': signal_type,
         'signal_info': signal_info,
-        'has_violations': violation_count > 0,
-        'violation_count': violation_count,
-        'violation_percentage': round(violation_percentage, 2),
-        'violations': violations.tolist()[:10],  # Limit to first 10 violations for output
+        'has_violations': soft_violation_count > 0 or hard_violation_count > 0,
+        'soft_violations': soft_violation_count,
+        'hard_violations': hard_violation_count,
+        'soft_violation_percentage': round(soft_violation_percentage, 2),
+        'hard_violation_percentage': round(hard_violation_percentage, 2),
+        'violations': {
+            'soft': soft_violations.tolist()[:10],  # Limit to first 10 violations for output
+            'hard': hard_violations.tolist()[:10]
+        },
         'expected_range': expected_range,
         'actual_range': {'min': float(data.min()), 'max': float(data.max())},
         'summary': (
             f"Signal '{signal_info.get('expanded', column_name)}' identified as {signal_type}. "
-            f"{violation_count} values ({violation_percentage:.1f}%) outside expected range "
-            f"[{min_val}, {max_val}] {expected_range['unit']}. "
+            f"Soft violations: {soft_violation_count} ({soft_violation_percentage:.1f}%) outside typical range "
+            f"[{soft_min}, {soft_max}] {expected_range['unit']}. "
+            f"Hard violations: {hard_violation_count} ({hard_violation_percentage:.1f}%) outside physical range "
+            f"[{hard_min}, {hard_max}] {expected_range['unit']}. "
             f"Domain: {signal_info.get('domain', 'Unknown')}"
         )
     }
@@ -853,11 +918,19 @@ def generate_automotive_quality_report(
             priority_issues.append(f"Column '{column}': {analysis['missing_percentage']:.1f}% missing values")
         
         range_validation = analysis.get('range_validation', {})
+        # Focus on hard violations for priority issues (physically impossible values)
         if (range_validation.get('has_violations', False) and
-                range_validation.get('violation_percentage', 0) > 5):
-            violation_pct = range_validation['violation_percentage']
+                range_validation.get('hard_violation_percentage', 0) > 1):
+            hard_violation_pct = range_validation['hard_violation_percentage']
             priority_issues.append(
-                f"Column '{column}': {violation_pct:.1f}% values outside expected range"
+                f"Column '{column}': {hard_violation_pct:.1f}% values outside physically possible range"
+            )
+        # Also flag high soft violations
+        elif (range_validation.get('has_violations', False) and
+              range_validation.get('soft_violation_percentage', 0) > 20):
+            soft_violation_pct = range_validation['soft_violation_percentage']
+            priority_issues.append(
+                f"Column '{column}': {soft_violation_pct:.1f}% values outside typical range"
             )
     
     if len(correlation_analysis.get('unexpected_correlations', [])) > 10:
@@ -897,13 +970,27 @@ def generate_automotive_quality_report(
         score_factors.append(0.1)
     
     range_violation_score = 0.0
+    signals_with_ranges = 0
     for analysis in results.signal_quality.values():
         range_val = analysis.get('range_validation', {})
-        if range_val.get('signal_type') and not range_val.get('has_violations', False):
-            range_violation_score += 1
+        if range_val.get('signal_type'):
+            signals_with_ranges += 1
+            # Heavily penalize hard violations, lightly penalize high soft violations
+            hard_violations = range_val.get('hard_violation_percentage', 0)
+            soft_violations = range_val.get('soft_violation_percentage', 0)
+            
+            if hard_violations == 0:
+                if soft_violations < 10:
+                    range_violation_score += 1.0  # Perfect score
+                elif soft_violations < 30:
+                    range_violation_score += 0.7  # Good score
+                else:
+                    range_violation_score += 0.3  # Poor score due to high soft violations
+            else:
+                range_violation_score += 0.1  # Very poor score due to hard violations
     
-    if results.signal_quality:
-        range_violation_score = (range_violation_score / len(results.signal_quality)) * 0.4
+    if signals_with_ranges > 0:
+        range_violation_score = (range_violation_score / signals_with_ranges) * 0.4
     
     correlation_score = 0.3 if len(correlation_analysis.get('unexpected_correlations', [])) < 5 else 0.2
     
@@ -944,15 +1031,18 @@ def generate_automotive_quality_report(
     ])
     
     automotive_signals = 0
-    range_violations = 0
+    soft_violations = 0
+    hard_violations = 0
     conditional_signals = 0
     
     for column, analysis in results.signal_quality.items():
         range_val = analysis.get('range_validation', {})
         if range_val.get('signal_type'):
             automotive_signals += 1
-            if range_val.get('has_violations', False):
-                range_violations += 1
+            if range_val.get('soft_violations', 0) > 0:
+                soft_violations += 1
+            if range_val.get('hard_violations', 0) > 0:
+                hard_violations += 1
         
         conditional = analysis.get('conditional_signal', {})
         if conditional.get('is_conditional_signal', False):
@@ -968,7 +1058,8 @@ def generate_automotive_quality_report(
 
     report_lines.extend([
         f"Automotive signals identified: {automotive_signals}",
-        f"Signals with range violations: {range_violations}",
+        f"Signals with soft range violations (outside typical): {soft_violations}",
+        f"Signals with hard range violations (physically impossible): {hard_violations}",
         f"Conditional signals identified: {conditional_signals}",
         f"Near-constant sensors: {len(constant_cols)}",
         f"Saturated sensors (min/max clipping): {len(saturated_cols)}",
